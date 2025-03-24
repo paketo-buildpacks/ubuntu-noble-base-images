@@ -17,6 +17,17 @@
       "stack_type": "tiny"
     },
     {
+      "name": "noble-static",
+      "config_dir": "stacks/noble-static-stack",
+      "output_dir": "builds/noble-static-stack",
+      "build_image": "build",
+      "run_image": "run",
+      "build_receipt_filename": "build-receipt.cyclonedx.json",
+      "run_receipt_filename": "run-receipt.cyclonedx.json",
+      "create_build_image": true,
+      "stack_type": "static"
+    },
+    {
       "name": "noble-base",
       "config_dir": "stacks/noble-base-stack",
       "output_dir": "builds/noble-base-stack",

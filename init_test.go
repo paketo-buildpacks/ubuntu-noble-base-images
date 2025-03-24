@@ -41,6 +41,13 @@ var baseStack struct {
 	RunImageID   string
 }
 
+var staticStack struct {
+	BuildArchive string
+	RunArchive   string
+	BuildImageID string
+	RunImageID   string
+}
+
 var RegistryUrl string
 
 var lifecycleVersion string
@@ -73,9 +80,16 @@ func TestAcceptance(t *testing.T) {
 	baseStack.RunArchive = filepath.Join(root, "builds", "noble-base-stack", "run.oci")
 	baseStack.RunImageID = fmt.Sprintf("%s/noble-base-stack-run-%s", RegistryUrl, uuid.NewString())
 
+	staticStack.BuildArchive = filepath.Join(root, "builds", "noble-static-stack", "build.oci")
+	staticStack.BuildImageID = fmt.Sprintf("%s/noble-static-stack-build-%s", RegistryUrl, uuid.NewString())
+
+	staticStack.RunArchive = filepath.Join(root, "builds", "noble-static-stack", "run.oci")
+	staticStack.RunImageID = fmt.Sprintf("%s/noble-static-stack-run-%s", RegistryUrl, uuid.NewString())
+
 	suite := spec.New("Acceptance", spec.Report(report.Terminal{}), spec.Parallel())
 	suite("MetadataTinyStack", testMetadataTinyStack)
 	suite("MetadataBaseStack", testMetadataBaseStack)
+	suite("MetadataStaticStack", testMetadataStaticStack)
 	suite("BuildpackIntegrationTinyStack", testBuildpackIntegrationTinyStack)
 	suite("BuildpackIntegrationBaseStack", testBuildpackIntegrationBaseStack)
 	suite.Run(t)
