@@ -12,10 +12,11 @@ import (
 	"github.com/paketo-buildpacks/packit/v2/vacation"
 	"github.com/sclevine/spec"
 
-	. "github.com/paketo-buildpacks/occam/matchers"
+	. "github.com/paketo-buildpacks/jam/integration/matchers"
+	. "github.com/paketo-buildpacks/packit/v2/matchers"
 )
 
-func testMetadata(t *testing.T, context spec.G, it spec.S) {
+func testMetadataTinyStack(t *testing.T, context spec.G, it spec.S) {
 	var (
 		Expect = NewWithT(t).Expect
 
@@ -32,7 +33,7 @@ func testMetadata(t *testing.T, context spec.G, it spec.S) {
 		Expect(os.RemoveAll(tmpDir)).To(Succeed())
 	})
 
-	it("builds base stack", func() {
+	it("builds tiny stack", func() {
 		var buildReleaseDate, runReleaseDate time.Time
 
 		by("confirming that the build image is correct", func() {
@@ -40,7 +41,7 @@ func testMetadata(t *testing.T, context spec.G, it spec.S) {
 			err := os.Mkdir(dir, os.ModePerm)
 			Expect(err).NotTo(HaveOccurred())
 
-			archive, err := os.Open(stack.BuildArchive)
+			archive, err := os.Open(tinyStack.BuildArchive)
 			Expect(err).NotTo(HaveOccurred())
 			defer archive.Close()
 
@@ -57,11 +58,19 @@ func testMetadata(t *testing.T, context spec.G, it spec.S) {
 			Expect(err).NotTo(HaveOccurred())
 
 			Expect(indexManifest.Manifests).To(HaveLen(2))
-			Expect(indexManifest.Manifests[0].Platform).To(Equal(&v1.Platform{
+
+			platforms := []v1.Platform{}
+			for _, manifest := range indexManifest.Manifests {
+				platforms = append(platforms, v1.Platform{
+					Architecture: manifest.Platform.Architecture,
+					OS:           manifest.Platform.OS,
+				})
+			}
+			Expect(platforms).To(ContainElement(v1.Platform{
 				OS:           "linux",
 				Architecture: "amd64",
 			}))
-			Expect(indexManifest.Manifests[1].Platform).To(Equal(&v1.Platform{
+			Expect(platforms).To(ContainElement(v1.Platform{
 				OS:           "linux",
 				Architecture: "arm64",
 			}))
@@ -73,11 +82,11 @@ func testMetadata(t *testing.T, context spec.G, it spec.S) {
 			Expect(err).NotTo(HaveOccurred())
 
 			Expect(file.Config.Labels).To(SatisfyAll(
-				HaveKeyWithValue("io.buildpacks.stack.id", "io.buildpacks.stacks.noble"),
+				HaveKeyWithValue("io.buildpacks.stack.id", "io.buildpacks.stacks.noble.tiny"),
 				HaveKeyWithValue("io.buildpacks.stack.description", "ubuntu:noble with compilers and shell utilities"),
 				HaveKeyWithValue("io.buildpacks.stack.distro.name", "ubuntu"),
 				HaveKeyWithValue("io.buildpacks.stack.distro.version", "24.04"),
-				HaveKeyWithValue("io.buildpacks.stack.homepage", "https://github.com/paketo-buildpacks/noble-base-stack"),
+				HaveKeyWithValue("io.buildpacks.stack.homepage", "https://github.com/paketo-buildpacks/noble-tiny-stack"),
 				HaveKeyWithValue("io.buildpacks.stack.maintainer", "Paketo Buildpacks"),
 				HaveKeyWithValue("io.buildpacks.stack.metadata", MatchJSON("{}")),
 			))
@@ -97,7 +106,7 @@ func testMetadata(t *testing.T, context spec.G, it spec.S) {
 			Expect(file.Config.Env).To(ContainElements(
 				"CNB_USER_ID=1001",
 				"CNB_GROUP_ID=1000",
-				"CNB_STACK_ID=io.buildpacks.stacks.noble",
+				"CNB_STACK_ID=io.buildpacks.stacks.noble.tiny",
 			))
 
 			Expect(image).To(HaveFileWithContent("/etc/gitconfig", ContainLines(
@@ -113,7 +122,6 @@ func testMetadata(t *testing.T, context spec.G, it spec.S) {
 				ContainSubstring("Package: curl"),
 				ContainSubstring("Package: git"),
 				ContainSubstring("Package: jq"),
-				ContainSubstring("Package: libexpat1"),
 				ContainSubstring("Package: libgmp-dev"),
 				ContainSubstring("Package: libssl3t64"),
 				ContainSubstring("Package: libyaml-0-2"),
@@ -131,7 +139,7 @@ func testMetadata(t *testing.T, context spec.G, it spec.S) {
 			err := os.Mkdir(dir, os.ModePerm)
 			Expect(err).NotTo(HaveOccurred())
 
-			archive, err := os.Open(stack.RunArchive)
+			archive, err := os.Open(tinyStack.RunArchive)
 			Expect(err).NotTo(HaveOccurred())
 			defer archive.Close()
 
@@ -148,11 +156,18 @@ func testMetadata(t *testing.T, context spec.G, it spec.S) {
 			Expect(err).NotTo(HaveOccurred())
 
 			Expect(indexManifest.Manifests).To(HaveLen(2))
-			Expect(indexManifest.Manifests[0].Platform).To(Equal(&v1.Platform{
+			platforms := []v1.Platform{}
+			for _, manifest := range indexManifest.Manifests {
+				platforms = append(platforms, v1.Platform{
+					Architecture: manifest.Platform.Architecture,
+					OS:           manifest.Platform.OS,
+				})
+			}
+			Expect(platforms).To(ContainElement(v1.Platform{
 				OS:           "linux",
 				Architecture: "amd64",
 			}))
-			Expect(indexManifest.Manifests[1].Platform).To(Equal(&v1.Platform{
+			Expect(platforms).To(ContainElement(v1.Platform{
 				OS:           "linux",
 				Architecture: "arm64",
 			}))
@@ -164,11 +179,11 @@ func testMetadata(t *testing.T, context spec.G, it spec.S) {
 			Expect(err).NotTo(HaveOccurred())
 
 			Expect(file.Config.Labels).To(SatisfyAll(
-				HaveKeyWithValue("io.buildpacks.stack.id", "io.buildpacks.stacks.noble"),
-				HaveKeyWithValue("io.buildpacks.stack.description", "ubuntu:noble with some common dependencies like tzdata and openssl"),
+				HaveKeyWithValue("io.buildpacks.stack.id", "io.buildpacks.stacks.noble.tiny"),
+				HaveKeyWithValue("io.buildpacks.stack.description", "distroless-like noble"),
 				HaveKeyWithValue("io.buildpacks.stack.distro.name", "ubuntu"),
 				HaveKeyWithValue("io.buildpacks.stack.distro.version", "24.04"),
-				HaveKeyWithValue("io.buildpacks.stack.homepage", "https://github.com/paketo-buildpacks/noble-base-stack"),
+				HaveKeyWithValue("io.buildpacks.stack.homepage", "https://github.com/paketo-buildpacks/noble-tiny-stack"),
 				HaveKeyWithValue("io.buildpacks.stack.maintainer", "Paketo Buildpacks"),
 				HaveKeyWithValue("io.buildpacks.stack.metadata", MatchJSON("{}")),
 			))
@@ -181,7 +196,7 @@ func testMetadata(t *testing.T, context spec.G, it spec.S) {
 
 			Expect(image).To(SatisfyAll(
 				HaveFileWithContent("/etc/group", ContainSubstring("cnb:x:1000:")),
-				HaveFileWithContent("/etc/passwd", ContainSubstring("cnb:x:1002:1000::/home/cnb:/bin/bash")),
+				HaveFileWithContent("/etc/passwd", ContainSubstring("cnb:x:1002:1000::/home/cnb:/sbin/nologin")),
 				HaveDirectory("/home/cnb"),
 			))
 
@@ -192,29 +207,73 @@ func testMetadata(t *testing.T, context spec.G, it spec.S) {
 				HaveDirectory("/tmp"),
 				HaveFile("/etc/services"),
 				HaveFile("/etc/nsswitch.conf"),
-				HaveFile("/etc/host.conf"),
 			))
 
-			Expect(image).To(HaveFileWithContent("/var/lib/dpkg/status", SatisfyAll(
+			Expect(image).To(HaveFileWithContent("/var/lib/dpkg/status.d/base-files", SatisfyAll(
 				ContainSubstring("Package: base-files"),
+				MatchRegexp("Version: [0-9]+ubuntu[0-9\\.]+"),
+				SatisfyAny(
+					ContainSubstring("Architecture: amd64"),
+					ContainSubstring("Architecture: arm64")),
+			)))
+
+			Expect(image).To(HaveFileWithContent("/var/lib/dpkg/status.d/ca-certificates", SatisfyAll(
 				ContainSubstring("Package: ca-certificates"),
+				MatchRegexp("Version: [0-9]+"),
+				ContainSubstring("Architecture: all"),
+			)))
+
+			Expect(image).To(HaveFileWithContent("/var/lib/dpkg/status.d/libc6", SatisfyAll(
 				ContainSubstring("Package: libc6"),
-				ContainSubstring("Package: libexpat1"),
+				MatchRegexp("Version: [0-9\\.\\-]+ubuntu[0-9\\.]+"),
+				SatisfyAny(
+					ContainSubstring("Architecture: amd64"),
+					ContainSubstring("Architecture: arm64")),
+			)))
+
+			Expect(image).To(HaveFileWithContent("/var/lib/dpkg/status.d/libssl3t64", SatisfyAll(
 				ContainSubstring("Package: libssl3t64"),
-				ContainSubstring("Package: libyaml-0-2"),
+				MatchRegexp("Version: [0-9\\.\\-]+ubuntu[0-9\\.]+"),
+				SatisfyAny(
+					ContainSubstring("Architecture: amd64"),
+					ContainSubstring("Architecture: arm64")),
+			)))
+
+			Expect(image).To(HaveFileWithContent("/var/lib/dpkg/status.d/netbase", SatisfyAll(
 				ContainSubstring("Package: netbase"),
+				MatchRegexp("Version: [0-9\\.]+"),
+				ContainSubstring("Architecture: all"),
+			)))
+
+			Expect(image).To(HaveFileWithContent("/var/lib/dpkg/status.d/openssl", SatisfyAll(
 				ContainSubstring("Package: openssl"),
+				MatchRegexp("Version: [0-9\\.\\-]+ubuntu[0-9\\.]+"),
+				SatisfyAny(
+					ContainSubstring("Architecture: amd64"),
+					ContainSubstring("Architecture: arm64")),
+			)))
+
+			Expect(image).To(HaveFileWithContent("/var/lib/dpkg/status.d/tzdata", SatisfyAll(
 				ContainSubstring("Package: tzdata"),
+				MatchRegexp("Version: [a-z0-9\\.\\-]+ubuntu[0-9\\.]+"),
+				ContainSubstring("Architecture: all"),
+			)))
+
+			Expect(image).To(HaveFileWithContent("/var/lib/dpkg/status.d/zlib1g", SatisfyAll(
 				ContainSubstring("Package: zlib1g"),
+				MatchRegexp("Version: [a-z0-9\\.\\-\\:]+ubuntu[0-9\\.]+"),
+				SatisfyAny(
+					ContainSubstring("Architecture: amd64"),
+					ContainSubstring("Architecture: arm64")),
 			)))
 
 			Expect(image).NotTo(HaveFile("/usr/share/ca-certificates"))
 
 			Expect(image).To(HaveFileWithContent("/etc/os-release", SatisfyAll(
-				ContainSubstring(`PRETTY_NAME="Paketo Buildpacks Base Noble"`),
-				ContainSubstring(`HOME_URL="https://github.com/paketo-buildpacks/noble-base-stack"`),
-				ContainSubstring(`SUPPORT_URL="https://github.com/paketo-buildpacks/noble-base-stack/blob/main/README.md"`),
-				ContainSubstring(`BUG_REPORT_URL="https://github.com/paketo-buildpacks/noble-base-stack/issues/new"`),
+				ContainSubstring(`PRETTY_NAME="Paketo Buildpacks Tiny Noble"`),
+				ContainSubstring(`HOME_URL="https://github.com/paketo-buildpacks/noble-tiny-stack"`),
+				ContainSubstring(`SUPPORT_URL="https://github.com/paketo-buildpacks/noble-tiny-stack/blob/main/README.md"`),
+				ContainSubstring(`BUG_REPORT_URL="https://github.com/paketo-buildpacks/noble-tiny-stack/issues/new"`),
 			)))
 		})
 		Expect(runReleaseDate).To(Equal(buildReleaseDate))
