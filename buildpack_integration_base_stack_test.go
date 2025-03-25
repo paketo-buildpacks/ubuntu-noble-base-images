@@ -43,10 +43,10 @@ func testBuildpackIntegrationBaseStack(t *testing.T, context spec.G, it spec.S) 
 	)
 
 	it.Before(func() {
+		var err error
+
 		pack = occam.NewPack().WithVerbose()
 		docker = occam.NewDocker()
-
-		var err error
 
 		name, err = occam.RandomName()
 		Expect(err).NotTo(HaveOccurred())

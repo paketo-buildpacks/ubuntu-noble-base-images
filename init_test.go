@@ -68,20 +68,14 @@ func TestAcceptance(t *testing.T) {
 	root, err := filepath.Abs(".")
 	Expect(err).ToNot(HaveOccurred())
 
-	tinyStack.BuildArchive = filepath.Join(root, "builds", "noble-tiny-stack", "build.oci")
-	tinyStack.BuildImageID = fmt.Sprintf("%s/noble-tiny-stack-build-%s", RegistryUrl, uuid.NewString())
-
-	tinyStack.RunArchive = filepath.Join(root, "builds", "noble-tiny-stack", "run.oci")
-	tinyStack.RunImageID = fmt.Sprintf("%s/noble-tiny-stack-run-%s", RegistryUrl, uuid.NewString())
-
 	baseStack.BuildArchive = filepath.Join(root, "builds", "noble-base-stack", "build.oci")
 	baseStack.BuildImageID = fmt.Sprintf("%s/noble-base-stack-build-%s", RegistryUrl, uuid.NewString())
 
 	baseStack.RunArchive = filepath.Join(root, "builds", "noble-base-stack", "run.oci")
 	baseStack.RunImageID = fmt.Sprintf("%s/noble-base-stack-run-%s", RegistryUrl, uuid.NewString())
 
-	staticStack.BuildArchive = filepath.Join(root, "builds", "noble-static-stack", "build.oci")
-	staticStack.BuildImageID = fmt.Sprintf("%s/noble-static-stack-build-%s", RegistryUrl, uuid.NewString())
+	tinyStack.RunArchive = filepath.Join(root, "builds", "noble-tiny-stack", "run.oci")
+	tinyStack.RunImageID = fmt.Sprintf("%s/noble-tiny-stack-run-%s", RegistryUrl, uuid.NewString())
 
 	staticStack.RunArchive = filepath.Join(root, "builds", "noble-static-stack", "run.oci")
 	staticStack.RunImageID = fmt.Sprintf("%s/noble-static-stack-run-%s", RegistryUrl, uuid.NewString())

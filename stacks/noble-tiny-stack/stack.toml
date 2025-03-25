@@ -1,4 +1,4 @@
-id = "io.buildpacks.stacks.noble.tiny"
+id = "io.buildpacks.stacks.noble"
 homepage = "https://github.com/paketo-buildpacks/noble-tiny-stack"
 maintainer = "Paketo Buildpacks"
 

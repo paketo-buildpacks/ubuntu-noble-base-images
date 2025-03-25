@@ -13,7 +13,6 @@ import (
 	"github.com/sclevine/spec"
 
 	. "github.com/paketo-buildpacks/jam/integration/matchers"
-	. "github.com/paketo-buildpacks/packit/v2/matchers"
 )
 
 func testMetadataTinyStack(t *testing.T, context spec.G, it spec.S) {
@@ -34,105 +33,7 @@ func testMetadataTinyStack(t *testing.T, context spec.G, it spec.S) {
 	})
 
 	it("builds tiny stack", func() {
-		var buildReleaseDate, runReleaseDate time.Time
-
-		by("confirming that the build image is correct", func() {
-			dir := filepath.Join(tmpDir, "build-index")
-			err := os.Mkdir(dir, os.ModePerm)
-			Expect(err).NotTo(HaveOccurred())
-
-			archive, err := os.Open(tinyStack.BuildArchive)
-			Expect(err).NotTo(HaveOccurred())
-			defer archive.Close()
-
-			err = vacation.NewArchive(archive).Decompress(dir)
-			Expect(err).NotTo(HaveOccurred())
-
-			path, err := layout.FromPath(dir)
-			Expect(err).NotTo(HaveOccurred())
-
-			index, err := path.ImageIndex()
-			Expect(err).NotTo(HaveOccurred())
-
-			indexManifest, err := index.IndexManifest()
-			Expect(err).NotTo(HaveOccurred())
-
-			Expect(indexManifest.Manifests).To(HaveLen(2))
-
-			platforms := []v1.Platform{}
-			for _, manifest := range indexManifest.Manifests {
-				platforms = append(platforms, v1.Platform{
-					Architecture: manifest.Platform.Architecture,
-					OS:           manifest.Platform.OS,
-				})
-			}
-			Expect(platforms).To(ContainElement(v1.Platform{
-				OS:           "linux",
-				Architecture: "amd64",
-			}))
-			Expect(platforms).To(ContainElement(v1.Platform{
-				OS:           "linux",
-				Architecture: "arm64",
-			}))
-
-			image, err := index.Image(indexManifest.Manifests[0].Digest)
-			Expect(err).NotTo(HaveOccurred())
-
-			file, err := image.ConfigFile()
-			Expect(err).NotTo(HaveOccurred())
-
-			Expect(file.Config.Labels).To(SatisfyAll(
-				HaveKeyWithValue("io.buildpacks.stack.id", "io.buildpacks.stacks.noble.tiny"),
-				HaveKeyWithValue("io.buildpacks.stack.description", "ubuntu:noble with compilers and shell utilities"),
-				HaveKeyWithValue("io.buildpacks.stack.distro.name", "ubuntu"),
-				HaveKeyWithValue("io.buildpacks.stack.distro.version", "24.04"),
-				HaveKeyWithValue("io.buildpacks.stack.homepage", "https://github.com/paketo-buildpacks/noble-tiny-stack"),
-				HaveKeyWithValue("io.buildpacks.stack.maintainer", "Paketo Buildpacks"),
-				HaveKeyWithValue("io.buildpacks.stack.metadata", MatchJSON("{}")),
-			))
-
-			buildReleaseDate, err = time.Parse(time.RFC3339, file.Config.Labels["io.buildpacks.stack.released"])
-			Expect(err).NotTo(HaveOccurred())
-			Expect(buildReleaseDate).NotTo(BeZero())
-
-			Expect(image).To(SatisfyAll(
-				HaveFileWithContent("/etc/group", ContainSubstring("cnb:x:1000:")),
-				HaveFileWithContent("/etc/passwd", ContainSubstring("cnb:x:1001:1000::/home/cnb:/bin/bash")),
-				HaveDirectory("/home/cnb"),
-			))
-
-			Expect(file.Config.User).To(Equal("1001:1000"))
-
-			Expect(file.Config.Env).To(ContainElements(
-				"CNB_USER_ID=1001",
-				"CNB_GROUP_ID=1000",
-				"CNB_STACK_ID=io.buildpacks.stacks.noble.tiny",
-			))
-
-			Expect(image).To(HaveFileWithContent("/etc/gitconfig", ContainLines(
-				"[safe]",
-				"\tdirectory = /workspace",
-				"\tdirectory = /workspace/source-ws",
-				"\tdirectory = /workspace/source",
-			)))
-
-			Expect(image).To(HaveFileWithContent("/var/lib/dpkg/status", SatisfyAll(
-				ContainSubstring("Package: build-essential"),
-				ContainSubstring("Package: ca-certificates"),
-				ContainSubstring("Package: curl"),
-				ContainSubstring("Package: git"),
-				ContainSubstring("Package: jq"),
-				ContainSubstring("Package: libgmp-dev"),
-				ContainSubstring("Package: libssl3t64"),
-				ContainSubstring("Package: libyaml-0-2"),
-				ContainSubstring("Package: netbase"),
-				ContainSubstring("Package: openssl"),
-				ContainSubstring("Package: pkg-config"),
-				ContainSubstring("Package: tzdata"),
-				ContainSubstring("Package: xz-utils"),
-				ContainSubstring("Package: zlib1g-dev"),
-			)))
-		})
+		var runReleaseDate time.Time
 
 		by("confirming that the run image is correct", func() {
 			dir := filepath.Join(tmpDir, "run-index")
@@ -179,7 +80,7 @@ func testMetadataTinyStack(t *testing.T, context spec.G, it spec.S) {
 			Expect(err).NotTo(HaveOccurred())
 
 			Expect(file.Config.Labels).To(SatisfyAll(
-				HaveKeyWithValue("io.buildpacks.stack.id", "io.buildpacks.stacks.noble.tiny"),
+				HaveKeyWithValue("io.buildpacks.stack.id", "io.buildpacks.stacks.noble"),
 				HaveKeyWithValue("io.buildpacks.stack.description", "distroless-like noble"),
 				HaveKeyWithValue("io.buildpacks.stack.distro.name", "ubuntu"),
 				HaveKeyWithValue("io.buildpacks.stack.distro.version", "24.04"),
@@ -276,6 +177,5 @@ func testMetadataTinyStack(t *testing.T, context spec.G, it spec.S) {
 				ContainSubstring(`BUG_REPORT_URL="https://github.com/paketo-buildpacks/noble-tiny-stack/issues/new"`),
 			)))
 		})
-		Expect(runReleaseDate).To(Equal(buildReleaseDate))
 	})
 }
