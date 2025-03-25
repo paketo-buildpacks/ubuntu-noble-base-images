@@ -13,7 +13,6 @@
       "run_image": "run",
       "build_receipt_filename": "build-receipt.cyclonedx.json",
       "run_receipt_filename": "run-receipt.cyclonedx.json",
-      "create_build_image": true,
       "stack_type": "tiny"
     },
     {
@@ -24,7 +23,6 @@
       "run_image": "run",
       "build_receipt_filename": "build-receipt.cyclonedx.json",
       "run_receipt_filename": "run-receipt.cyclonedx.json",
-      "create_build_image": true,
       "stack_type": "static"
     },
     {
