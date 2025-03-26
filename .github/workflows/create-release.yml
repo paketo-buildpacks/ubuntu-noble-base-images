@@ -225,31 +225,29 @@ jobs:
       id: receipt_pattern
       run: |
         if [ "${{ matrix.arch.name }}" = "amd64" ]; then
-          if [ ${{ matrix.stacks.create_build_image }} == true ]; then
+          if [ "${{ matrix.stacks.create_build_image }}" == "true" ]; then
             echo "build=${{ needs.preparation.outputs.os_codename }}-${{ matrix.stacks.stack_type }}-stack-\\d+\\.\\d+(\\.\\d+)?-${{ matrix.stacks.build_receipt_filename }}" >> "$GITHUB_OUTPUT"
           fi
           echo "run=${{ needs.preparation.outputs.os_codename }}-${{ matrix.stacks.stack_type }}-stack-\\d+\\.\\d+(\\.\\d+)?-${{ matrix.stacks.run_receipt_filename }}" >> "$GITHUB_OUTPUT"
         else
-          if [ ${{ matrix.stacks.create_build_image }} == true ]; then
+          if [ "${{ matrix.stacks.create_build_image }}" == "true" ]; then
             echo "build=${{ needs.preparation.outputs.os_codename }}-${{ matrix.stacks.stack_type }}-stack-\\d+\\.\\d+(\\.\\d+)?-${{ matrix.arch.name }}-${{ matrix.stacks.build_receipt_filename }}" >> "$GITHUB_OUTPUT"
           fi
           echo "run=${{ needs.preparation.outputs.os_codename }}-${{ matrix.stacks.stack_type }}-stack-\\d+\\.\\d+(\\.\\d+)?-${{ matrix.arch.name }}-${{ matrix.stacks.run_receipt_filename }}" >> "$GITHUB_OUTPUT"
         fi
 
-    - name: Write Empty Previous Receipts
+    - name: Write Empty Previous Build Receipt
+      if: ${{ matrix.stacks.create_build_image == false || matrix.arch.is_new == true || matrix.stacks.is_new == true || steps.check_previous.outputs.exists == 'false' }}
+      run: |
+        echo '{"components":[]}' > "./${{ matrix.arch.name }}-previous-build-receipt-${{ matrix.stacks.name }}"
+
+    - name: Write Empty Previous Run Receipt
       if: ${{ matrix.arch.is_new == true || matrix.stacks.is_new == true || steps.check_previous.outputs.exists == 'false' }}
       run: |
-        if [ ${{ matrix.stacks.create_build_image }} == true ]; then
-          if [ ! -f "./${{ matrix.arch.name }}-previous-build-receipt-${{ matrix.stacks.name }}" ]; then
-            echo '{"components":[]}' > "./${{ matrix.arch.name }}-previous-build-receipt-${{ matrix.stacks.name }}"
-          fi
-        fi
-        if [ ! -f "./${{ matrix.arch.name }}-previous-run-receipt-${{ matrix.stacks.name }}" ]; then
-          echo '{"components":[]}' > "./${{ matrix.arch.name }}-previous-run-receipt-${{ matrix.stacks.name }}"
-        fi
+        echo '{"components":[]}' > "./${{ matrix.arch.name }}-previous-run-receipt-${{ matrix.stacks.name }}"
 
     - name: Find and Download Previous Build Receipt
-      if: ${{ matrix.arch.is_new == false && matrix.stacks.is_new == false && steps.check_previous.outputs.exists == 'true' }}
+      if: ${{ matrix.stacks.create_build_image == true && matrix.arch.is_new == false && matrix.stacks.is_new == false && steps.check_previous.outputs.exists == 'true' }}
       id: previous_build
       uses: paketo-buildpacks/github-config/actions/release/find-and-download-asset@main
       with:
@@ -273,13 +271,13 @@ jobs:
         strict: true
 
     - name: Write Empty Package list
-      if: ${{ steps.previous_build.outputs.output_path == '' && steps.previous_run.outputs.output_path == '' }}
+      if: ${{ steps.previous_run.outputs.output_path == '' }}
       run: |
         echo '[]' > "./${{ matrix.arch.name }}-package-list-${{ matrix.stacks.name }}"
 
     - name: Get Package List
       id: packages
-      if: ${{ steps.previous_build.outputs.output_path != '' && steps.previous_run.outputs.output_path != '' }}
+      if: ${{ steps.previous_run.outputs.output_path != '' }}
       uses: paketo-buildpacks/github-config/actions/stack/generate-package-list@main
       with:
         build_receipt: "${{ github.workspace }}/${{ matrix.arch.name }}-previous-build-receipt-${{ matrix.stacks.name }}"
