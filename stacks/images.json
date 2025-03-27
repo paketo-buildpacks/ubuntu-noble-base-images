@@ -3,7 +3,9 @@
   "update_on_new_image": true,
   "receipts_show_limit": 16,
   "platforms": ["linux/amd64", "linux/arm64"],
+  "os_name": "ubuntu",
   "os_codename": "noble",
+  "pattern_image_registry_name": "os-os_codename-build_image_run_image-stack_type",
   "images": [
     {
       "name": "noble-tiny",

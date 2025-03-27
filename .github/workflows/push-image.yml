@@ -13,6 +13,7 @@ on:
 
 env:
   REGISTRIES_FILEPATH: "registries.json"
+  STACKS_FILEPATH: "stacks/images.json"
   GCR_REGISTRY: "gcr.io"
   GCR_USERNAME: "_json_key"
 
@@ -26,7 +27,6 @@ jobs:
       push_to_gcr: ${{ steps.parse_configs.outputs.push_to_gcr }}
       push_to_dockerhub: ${{ steps.parse_configs.outputs.push_to_dockerhub }}
       tag: ${{ steps.event.outputs.tag }}
-      registry_repo_name: ${{ steps.registry-repo.outputs.name }}
     steps:
     - name: Checkout
       uses: actions/checkout@v4
@@ -44,13 +44,6 @@ jobs:
           echo "tag=$(jq -r '.release.tag_name' "${GITHUB_EVENT_PATH}" | sed s/^v//)" >> "$GITHUB_OUTPUT"
         fi
 
-    - name: Get Registry Repo Name
-      id: registry-repo
-      run: |
-        # Strip off 'stack' suffix from repo name
-        # some-name-stack --> some-name
-        echo "name=$(echo "${{ github.repository }}" | sed 's/^.*\///' | sed 's/\-stack$//')" >> "$GITHUB_OUTPUT"
-
     - name: Set matrix
       id: set-matrix
       run: |
@@ -60,13 +53,25 @@ jobs:
 
         matrix=$(jq -n -c '[]')
 
+        if [ -f ${{ env.STACKS_FILEPATH }} ]; then
+          pattern_image_registry_name=$(jq '.pattern_image_registry_name' ${{ env.STACKS_FILEPATH }})
+          os_name=$(jq -r '.os_name' ${{ env.STACKS_FILEPATH }})
+        else
+          pattern_image_registry_name="build_image_run_image-os_codename-stack_type"
+        fi
+
         for oci_asset in $oci_release_assets; do
           oci_asset_name=$(echo $oci_asset | jq -r '.name')
           oci_asset_url=$(echo $oci_asset | jq -r '.url')
           os_codename=$(echo $oci_asset | jq -r '.name' | cut -d '-' -f 1)
           stack_type=$(echo $oci_asset | jq -r '.name' | cut -d '-' -f 2)
           build_or_run_image_name=$(echo $oci_asset | jq -r '.name' | cut -d '-' -f 5- | cut -d '.' -f 1)
-          image_registry_name="${build_or_run_image_name}-${os_codename}-${stack_type}"
+
+          if [ $pattern_image_registry_name == "build_image_run_image-os_codename-stack_type" ]; then
+            image_registry_name="${build_or_run_image_name}-${os_codename}-${stack_type}"
+          else
+            image_registry_name="${os_name}-${os_codename}-${build_or_run_image_name}-${stack_type}"
+          fi
 
           matrix=$(echo $matrix | jq -c --arg os_codename "$os_codename" \
             --arg oci_asset_name "$oci_asset_name" \
@@ -75,8 +80,8 @@ jobs:
             '. + [{name: $oci_asset_name, registry_name: $registry_name, oci_asset_url: $oci_asset_url}]')
         done
 
-        printf "matrix=%s\n" "${matrix}"
-        printf "matrix=%s\n" "${matrix}" >> "$GITHUB_OUTPUT"
+        echo "matrix=${matrix}"
+        echo "matrix=${matrix}" >> "$GITHUB_OUTPUT"
 
     - name: Set DOCKERHUB_ORG namespace
       id: set-dockerhub-org-namespace
