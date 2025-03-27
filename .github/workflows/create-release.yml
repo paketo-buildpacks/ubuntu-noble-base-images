@@ -1329,10 +1329,26 @@ jobs:
               stack_type="${{ needs.preparation.outputs.registry_repo_name }}"
             fi
 
-            if [ ${create_build_image} == true ]; then
-              echo "Build: \`${{ needs.preparation.outputs.repo_owner }}/${build_image}-${os_codename}-${stack_type}:${{ steps.tag.outputs.tag }}\`" >> release_notes.md
+            if [ -f ${{ env.STACKS_FILEPATH }} ]; then
+              pattern_image_registry_name=$(jq '.pattern_image_registry_name' ${{ env.STACKS_FILEPATH }})
+              os_name=$(jq -r '.os_name' ${{ env.STACKS_FILEPATH }})
+            else
+              pattern_image_registry_name="build_image_run_image-os_codename-stack_type"
             fi
-            echo "Run: \`${{ needs.preparation.outputs.repo_owner }}/${run_image}-${os_codename}-${stack_type}:${{ steps.tag.outputs.tag }}\`" >> release_notes.md
+
+            if [ ${create_build_image} == true ]; then
+              if [ $pattern_image_registry_name == "build_image_run_image-os_codename-stack_type" ]; then
+                echo "Build: \`${{ needs.preparation.outputs.repo_owner }}/${build_image}-${os_codename}-${stack_type}:${{ steps.tag.outputs.tag }}\`" >> release_notes.md
+              else
+                echo "Build: \`${{ needs.preparation.outputs.repo_owner }}/${os_name}-${os_codename}-${build_image}-${stack_type}:${{ steps.tag.outputs.tag }}\`" >> release_notes.md
+              fi
+            fi
+
+            if [ $pattern_image_registry_name == "build_image_run_image-os_codename-stack_type" ]; then
+              echo "Run: \`${{ needs.preparation.outputs.repo_owner }}/${run_image}-${os_codename}-${stack_type}:${{ steps.tag.outputs.tag }}\`" >> release_notes.md
+            else
+              echo "Run: \`${{ needs.preparation.outputs.repo_owner }}/${os_name}-${os_codename}-${run_image}-${stack_type}:${{ steps.tag.outputs.tag }}\`" >> release_notes.md
+            fi
           done
         fi
 
