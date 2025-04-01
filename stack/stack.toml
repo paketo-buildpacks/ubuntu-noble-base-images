@@ -1,0 +1,103 @@
+id = "io.buildpacks.stacks.noble"
+homepage = "https://github.com/paketo-buildpacks/noble-base-stack"
+maintainer = "Paketo Buildpacks"
+
+platforms = ["linux/amd64", "linux/arm64"]
+
+[build]
+  description = "ubuntu:noble with compilers and shell utilities"
+  dockerfile = "./build.Dockerfile"
+  gid = 1000
+  shell = "/bin/bash"
+  uid = 1001
+
+  [build.args]
+    architecture = "amd64"
+
+    sources = """
+Types: deb
+URIs: http://archive.ubuntu.com/ubuntu/
+Suites: noble noble-updates
+Components: main universe multiverse
+Signed-By: /usr/share/keyrings/ubuntu-archive-keyring.gpg
+
+Types: deb
+URIs: http://security.ubuntu.com/ubuntu/
+Suites: noble-security
+Components: main universe multiverse
+Signed-By: /usr/share/keyrings/ubuntu-archive-keyring.gpg
+    """
+
+    packages = """\
+    build-essential \
+    ca-certificates \
+    curl \
+    git \
+    jq \
+    libexpat1 \
+    libgmp-dev \
+    libssl3t64 \
+    libssl-dev \
+    libyaml-0-2 \
+    netbase \
+    openssl \
+    pkg-config \
+    tzdata \
+    xz-utils \
+    zlib1g-dev \
+    """
+
+    [build.platforms."linux/arm64".args]
+    architecture = "arm64"
+
+    sources = """
+Types: deb
+URIs: http://ports.ubuntu.com/ubuntu-ports/
+Suites: noble noble-updates noble-security
+Components: main universe multiverse
+    """
+
+[run]
+  description = "ubuntu:noble with some common dependencies like tzdata and openssl"
+  dockerfile = "./run.Dockerfile"
+  gid = 1000
+  shell = "/bin/bash"
+  uid = 1002
+
+  [run.args]
+    architecture = "amd64"
+
+    sources = """
+Types: deb
+URIs: http://archive.ubuntu.com/ubuntu/
+Suites: noble noble-updates
+Components: main universe multiverse
+Signed-By: /usr/share/keyrings/ubuntu-archive-keyring.gpg
+
+Types: deb
+URIs: http://security.ubuntu.com/ubuntu/
+Suites: noble-security
+Components: main universe multiverse
+Signed-By: /usr/share/keyrings/ubuntu-archive-keyring.gpg
+    """
+
+    packages = """\
+    ca-certificates \
+    libexpat1 \
+    libssl3t64 \
+    libyaml-0-2 \
+    netbase \
+    openssl \
+    tzdata \
+    zlib1g \
+    """
+
+    [run.platforms."linux/arm64".args]
+    architecture = "arm64"
+
+    sources = """
+Types: deb
+URIs: http://ports.ubuntu.com/ubuntu-ports/
+Suites: noble noble-updates noble-security
+Components: main universe multiverse
+    """

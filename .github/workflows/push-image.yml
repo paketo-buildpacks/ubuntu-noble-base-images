@@ -1,0 +1,169 @@
+name: Push Stack Image
+
+on:
+  release:
+    types:
+    - published
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version of the stack to push'
+        required: false
+
+jobs:
+  push:
+    name: Push
+    runs-on: ubuntu-22.04
+    steps:
+
+    - name: Parse Event
+      id: event
+      run: |
+        set -euo pipefail
+        shopt -s inherit_errexit
+
+        if [[ "${{ github.event.inputs.version }}" == '' ]]; then
+          echo "tag=$(jq -r '.release.tag_name' "${GITHUB_EVENT_PATH}" | sed s/^v//)" >> "$GITHUB_OUTPUT"
+        else
+          echo "tag=${{ github.event.inputs.version }}" >> "$GITHUB_OUTPUT"
+        fi
+        echo "build_download_url=$(jq -r '.release.assets[] | select(.name | endswith("build.oci")) | .url' "${GITHUB_EVENT_PATH}")" >> "$GITHUB_OUTPUT"
+        echo "run_download_url=$(jq -r '.release.assets[] | select(.name | endswith("run.oci")) | .url' "${GITHUB_EVENT_PATH}")" >> "$GITHUB_OUTPUT"
+
+    - name: Checkout
+      uses: actions/checkout@v3
+
+    - name: Set up QEMU
+      uses: docker/setup-qemu-action@v1
+
+    - name: Set up buildx
+      uses: docker/setup-buildx-action@v2
+
+    - name: Download Build Image
+      uses: paketo-buildpacks/github-config/actions/release/download-asset@main
+      if: github.event.inputs.version == ''
+      with:
+        url: ${{ steps.event.outputs.build_download_url }}
+        output: "/github/workspace/build.oci"
+        token: ${{ secrets.PAKETO_BOT_GITHUB_TOKEN }}
+
+    - name: Download Build Image Manually
+      uses: paketo-buildpacks/github-config/actions/release/download-asset@main
+      if: github.event.inputs.version != ''
+      with:
+        url: "https://github.com/${{ github.repository }}/releases/download/v${{ github.event.inputs.version }}/${{ github.event.repository.name }}-${{ github.event.inputs.version }}-build.oci"
+        output: "/github/workspace/build.oci"
+        token: ${{ secrets.PAKETO_BOT_GITHUB_TOKEN }}
+
+    - name: Download Run Image
+      uses: paketo-buildpacks/github-config/actions/release/download-asset@main
+      if: github.event.inputs.version == ''
+      with:
+        url: ${{ steps.event.outputs.run_download_url }}
+        output: "/github/workspace/run.oci"
+        token: ${{ secrets.PAKETO_BOT_GITHUB_TOKEN }}
+
+    - name: Download Run Image Manually
+      uses: paketo-buildpacks/github-config/actions/release/download-asset@main
+      if: github.event.inputs.version != ''
+      with:
+        url: "https://github.com/${{ github.repository }}/releases/download/v${{ github.event.inputs.version }}/${{ github.event.repository.name }}-${{ github.event.inputs.version }}-run.oci"
+        output: "/github/workspace/run.oci"
+        token: ${{ secrets.PAKETO_BOT_GITHUB_TOKEN }}
+
+    - name: Get Registry Repo Name
+      id: registry-repo
+      run: |
+        # Strip off the Github org prefix and 'stack' suffix from repo name
+        # paketo-buildpacks/some-name-stack --> some-name
+        echo "name=$(echo "${{ github.repository }}" | sed 's/^.*\///' | sed 's/\-stack$//')" >> "$GITHUB_OUTPUT"
+
+    - name: Docker login docker.io
+      uses: docker/login-action@v2
+      with:
+        username: ${{ secrets.PAKETO_BUILDPACKS_DOCKERHUB_USERNAME }}
+        password: ${{ secrets.PAKETO_BUILDPACKS_DOCKERHUB_PASSWORD }}
+        registry: docker.io
+
+    - name: Docker login gcr.io
+      uses: docker/login-action@v2
+      with:
+        username: _json_key
+        password: ${{ secrets.GCR_PUSH_BOT_JSON_KEY }}
+        registry: gcr.io
+
+    - name: Push to DockerHub
+      id: push
+      env:
+        DOCKERHUB_ORG: "paketobuildpacks"
+        GCR_PROJECT: "paketo-buildpacks"
+      run: |
+        # Ensure other scripts can access the .bin directory to install their own
+        # tools after we install them as whatever user we are.
+        mkdir -p ./.bin/
+        chmod 777 ./.bin/
+
+        ./scripts/publish.sh \
+          --build-ref "docker.io/${DOCKERHUB_ORG}/build-${{ steps.registry-repo.outputs.name }}:${{ steps.event.outputs.tag }}" \
+          --build-ref "docker.io/${DOCKERHUB_ORG}/build-${{ steps.registry-repo.outputs.name }}:latest" \
+          --run-ref "docker.io/${DOCKERHUB_ORG}/run-${{ steps.registry-repo.outputs.name }}:${{ steps.event.outputs.tag }}" \
+          --run-ref "docker.io/${DOCKERHUB_ORG}/run-${{ steps.registry-repo.outputs.name }}:latest" \
+          --build-archive "${GITHUB_WORKSPACE}/build.oci" \
+          --run-archive "${GITHUB_WORKSPACE}/run.oci"
+
+        for imageType in build run; do
+          echo "FROM docker.io/${DOCKERHUB_ORG}/${imageType}-${{ steps.registry-repo.outputs.name }}:${{ steps.event.outputs.tag }}" | \
+          docker buildx build -f - . \
+            --tag "gcr.io/${GCR_PROJECT}/${imageType}-${{ steps.registry-repo.outputs.name }}:${{ steps.event.outputs.tag }}" \
+            --tag "gcr.io/${GCR_PROJECT}/${imageType}-${{ steps.registry-repo.outputs.name }}:latest" \
+            --platform linux/amd64,linux/arm64 \
+            --provenance=false \
+            --push
+        done
+
+        # If the repository name contains 'bionic', let's push it to legacy image locations as well:
+        #    paketobuildpacks/{build/run}:{version}-{variant}
+        #    paketobuildpacks/{build/run}:{version}-{variant}-cnb
+        #    paketobuildpacks/{build/run}:{variant}-cnb
+        #    paketobuildpacks/{build/run}:{variant}
+        registry_repo="${{ steps.registry-repo.outputs.name }}"
+        if [[ ${registry_repo} == "bionic"-* ]];
+          then
+          # Strip the final part from a repo name after the `-`
+          # bionic-tiny --> tiny
+          variant="${registry_repo#bionic-}"
+
+          sudo skopeo copy "oci-archive:${GITHUB_WORKSPACE}/build.oci" "docker://${DOCKERHUB_ORG}/build:${{ steps.event.outputs.tag }}-${variant}"
+          sudo skopeo copy "oci-archive:${GITHUB_WORKSPACE}/build.oci" "docker://${DOCKERHUB_ORG}/build:${{ steps.event.outputs.tag }}-${variant}-cnb"
+          sudo skopeo copy "oci-archive:${GITHUB_WORKSPACE}/build.oci" "docker://${DOCKERHUB_ORG}/build:${variant}-cnb"
+          sudo skopeo copy "oci-archive:${GITHUB_WORKSPACE}/build.oci" "docker://${DOCKERHUB_ORG}/build:${variant}"
+
+          sudo skopeo copy "oci-archive:${GITHUB_WORKSPACE}/run.oci" "docker://${DOCKERHUB_ORG}/run:${{ steps.event.outputs.tag }}-${variant}"
+          sudo skopeo copy "oci-archive:${GITHUB_WORKSPACE}/run.oci" "docker://${DOCKERHUB_ORG}/run:${{ steps.event.outputs.tag }}-${variant}-cnb"
+          sudo skopeo copy "oci-archive:${GITHUB_WORKSPACE}/run.oci" "docker://${DOCKERHUB_ORG}/run:${variant}-cnb"
+          sudo skopeo copy "oci-archive:${GITHUB_WORKSPACE}/run.oci" "docker://${DOCKERHUB_ORG}/run:${variant}"
+
+          sudo skopeo copy "docker://${DOCKERHUB_ORG}/build:${variant}-cnb" "docker://gcr.io/${GCR_PROJECT}/build:${variant}-cnb"
+          sudo skopeo copy "docker://${DOCKERHUB_ORG}/run:${variant}-cnb" "docker://gcr.io/${GCR_PROJECT}/run:${variant}-cnb"
+        fi
+
+
+  failure:
+    name: Alert on Failure
+    runs-on: ubuntu-22.04
+    needs: [push]
+    if: ${{ always() && needs.push.result == 'failure' }}
+    steps:
+    - name: File Failure Alert Issue
+      uses: paketo-buildpacks/github-config/actions/issue/file@main
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        repo: ${{ github.repository }}
+        label: "failure:push"
+        comment_if_exists: true
+        issue_title: "Failure: Push Image workflow"
+        issue_body: |
+          Push Image workflow [failed](https://github.com/${{github.repository}}/actions/runs/${{github.run_id}}).
+          Please take a look to ensure CVE patches can be released. (cc @paketo-buildpacks/stacks-maintainers).
+        comment_body: |
+           Another failure occurred: https://github.com/${{github.repository}}/actions/runs/${{github.run_id}}
