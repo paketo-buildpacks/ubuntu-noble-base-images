@@ -1,0 +1,4 @@
+PRETTY_NAME="Paketo Buildpacks Tiny Noble"
+HOME_URL="https://github.com/paketo-buildpacks/noble-tiny-stack"
+SUPPORT_URL="https://github.com/paketo-buildpacks/noble-tiny-stack/blob/main/README.md"
+BUG_REPORT_URL="https://github.com/paketo-buildpacks/noble-tiny-stack/issues/new"

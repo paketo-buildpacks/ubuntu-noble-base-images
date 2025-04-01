@@ -15,7 +15,7 @@ import (
 	. "github.com/paketo-buildpacks/occam/matchers"
 )
 
-func testMetadata(t *testing.T, context spec.G, it spec.S) {
+func testMetadataBaseStack(t *testing.T, context spec.G, it spec.S) {
 	var (
 		Expect = NewWithT(t).Expect
 
@@ -40,7 +40,7 @@ func testMetadata(t *testing.T, context spec.G, it spec.S) {
 			err := os.Mkdir(dir, os.ModePerm)
 			Expect(err).NotTo(HaveOccurred())
 
-			archive, err := os.Open(stack.BuildArchive)
+			archive, err := os.Open(baseStack.BuildArchive)
 			Expect(err).NotTo(HaveOccurred())
 			defer archive.Close()
 
@@ -131,7 +131,7 @@ func testMetadata(t *testing.T, context spec.G, it spec.S) {
 			err := os.Mkdir(dir, os.ModePerm)
 			Expect(err).NotTo(HaveOccurred())
 
-			archive, err := os.Open(stack.RunArchive)
+			archive, err := os.Open(baseStack.RunArchive)
 			Expect(err).NotTo(HaveOccurred())
 			defer archive.Close()
 
