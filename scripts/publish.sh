@@ -87,7 +87,7 @@ function main() {
     fi
 
     if ((${#run_ref[@]} == 0)); then
-      util::print::error "--run-ref is required [Example: gcr.iopaketo-buildpacks/foo:1.0.0]"
+      util::print::error "--run-ref is required [Example: docker.io/paketobuildpacks/foo:1.0.0]"
     fi
 
     if ((${#run_ref[@]} != ${#build_ref[@]})); then
