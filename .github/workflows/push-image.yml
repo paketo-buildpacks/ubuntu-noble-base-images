@@ -94,7 +94,7 @@ jobs:
         registries_filepath="${{ env.REGISTRIES_FILEPATH }}"
 
         push_to_dockerhub=true
-        push_to_gcr=true
+        push_to_gcr=false
 
         if [[ -f $registries_filepath ]]; then
 
