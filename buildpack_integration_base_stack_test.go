@@ -51,10 +51,10 @@ func testBuildpackIntegrationBaseStack(t *testing.T, context spec.G, it spec.S) 
 		name, err = occam.RandomName()
 		Expect(err).NotTo(HaveOccurred())
 
-		mavenBuildpack = "gcr.io/paketo-buildpacks/maven"
-		jvmBuildpack = "gcr.io/paketo-buildpacks/sap-machine"
-		syftBuildpack = "gcr.io/paketo-buildpacks/syft"
-		executableJarBuildpack = "gcr.io/paketo-buildpacks/executable-jar"
+		mavenBuildpack = "docker.io/paketobuildpacks/maven"
+		jvmBuildpack = "docker.io/paketobuildpacks/sap-machine"
+		syftBuildpack = "docker.io/paketobuildpacks/syft"
+		executableJarBuildpack = "docker.io/paketobuildpacks/executable-jar"
 
 		source, err = occam.Source(filepath.Join("integration", "testdata", "java_simple_app"))
 		Expect(err).NotTo(HaveOccurred())

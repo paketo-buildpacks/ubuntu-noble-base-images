@@ -45,7 +45,7 @@ func testBuildpackIntegrationTinyStack(t *testing.T, context spec.G, it spec.S) 
 		Expect(err).NotTo(HaveOccurred())
 
 		buildPlanBuildpack = "index.docker.io/paketocommunity/build-plan"
-		goDistBuildpack = "gcr.io/paketo-buildpacks/go-dist"
+		goDistBuildpack = "docker.io/paketobuildpacks/go-dist"
 
 		source, err = occam.Source(filepath.Join("integration", "testdata", "go_simple_app"))
 		Expect(err).NotTo(HaveOccurred())
