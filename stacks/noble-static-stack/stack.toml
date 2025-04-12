@@ -1,0 +1,94 @@
+id = "io.buildpacks.stacks.noble.static"
+homepage = "https://github.com/paketo-buildpacks/noble-static-stack"
+maintainer = "Paketo Buildpacks"
+
+platforms = ["linux/amd64", "linux/arm64"]
+
+[build]
+  description = "ubuntu:noble with compilers and shell utilities"
+  dockerfile = "./build.Dockerfile"
+  gid = 1000
+  shell = "/bin/bash"
+  uid = 1001
+
+  [build.args]
+    architecture = "amd64"
+
+    sources = """
+Types: deb
+URIs: http://archive.ubuntu.com/ubuntu/
+Suites: noble noble-updates
+Components: main universe multiverse
+Signed-By: /usr/share/keyrings/ubuntu-archive-keyring.gpg
+
+Types: deb
+URIs: http://security.ubuntu.com/ubuntu/
+Suites: noble-security
+Components: main universe multiverse
+Signed-By: /usr/share/keyrings/ubuntu-archive-keyring.gpg
+"""
+
+    packages = """\
+    build-essential \
+    ca-certificates \
+    curl \
+    git \
+    jq \
+    libgmp-dev \
+    libssl3t64 \
+    libssl-dev \
+    libyaml-0-2 \
+    netbase \
+    openssl \
+    pkg-config \
+    tzdata \
+    xz-utils \
+    zlib1g-dev"""
+
+  [build.platforms."linux/arm64".args]
+    architecture = "arm64"
+
+    sources = """
+Types: deb
+URIs: http://ports.ubuntu.com/ubuntu-ports/
+Suites: noble noble-updates noble-security
+Components: main universe multiverse
+    """
+
+[run]
+  description = "noble for statically-linked applications containing tzdata and ca-certificates"
+  dockerfile = "./run/run.Dockerfile"
+  gid = 1000
+  shell = "/sbin/nologin"
+  uid = 1002
+
+  [run.args]
+    architecture = "amd64"
+
+    sources = """
+Types: deb
+URIs: http://archive.ubuntu.com/ubuntu/
+Suites: noble noble-updates
+Components: main universe multiverse
+Signed-By: /usr/share/keyrings/ubuntu-archive-keyring.gpg
+
+Types: deb
+URIs: http://security.ubuntu.com/ubuntu/
+Suites: noble-security
+Components: main universe multiverse
+Signed-By: /usr/share/keyrings/ubuntu-archive-keyring.gpg
+"""
+
+    packages = """\
+    ca-certificates \
+    tzdata"""
+
+  [run.platforms."linux/arm64".args]
+    architecture = "arm64"
+
+    sources = """
+Types: deb
+URIs: http://ports.ubuntu.com/ubuntu-ports/
+Suites: noble noble-updates noble-security
+Components: main universe multiverse
+    """
