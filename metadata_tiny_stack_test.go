@@ -118,10 +118,18 @@ func testMetadataTinyStack(t *testing.T, context spec.G, it spec.S) {
 					ContainSubstring("Architecture: arm64")),
 			)))
 
+			Expect(image).To(HaveFileWithContent("/var/lib/dpkg/info/base-files.list", SatisfyAll(
+				ContainSubstring("/."),
+			)))
+
 			Expect(image).To(HaveFileWithContent("/var/lib/dpkg/status.d/ca-certificates", SatisfyAll(
 				ContainSubstring("Package: ca-certificates"),
 				MatchRegexp("Version: [0-9]+"),
 				ContainSubstring("Architecture: all"),
+			)))
+
+			Expect(image).To(HaveFileWithContent("/var/lib/dpkg/info/ca-certificates.list", SatisfyAll(
+				ContainSubstring("/."),
 			)))
 
 			Expect(image).To(HaveFileWithContent("/var/lib/dpkg/status.d/libc6", SatisfyAll(
@@ -132,6 +140,10 @@ func testMetadataTinyStack(t *testing.T, context spec.G, it spec.S) {
 					ContainSubstring("Architecture: arm64")),
 			)))
 
+			Expect(image).To(HaveFileWithContent("/var/lib/dpkg/info/libc6.list", SatisfyAll(
+				ContainSubstring("/."),
+			)))
+
 			Expect(image).To(HaveFileWithContent("/var/lib/dpkg/status.d/libssl3t64", SatisfyAll(
 				ContainSubstring("Package: libssl3t64"),
 				MatchRegexp("Version: [0-9\\.\\-]+ubuntu[0-9\\.]+"),
@@ -140,10 +152,18 @@ func testMetadataTinyStack(t *testing.T, context spec.G, it spec.S) {
 					ContainSubstring("Architecture: arm64")),
 			)))
 
+			Expect(image).To(HaveFileWithContent("/var/lib/dpkg/info/libssl3t64.list", SatisfyAll(
+				ContainSubstring("/."),
+			)))
+
 			Expect(image).To(HaveFileWithContent("/var/lib/dpkg/status.d/netbase", SatisfyAll(
 				ContainSubstring("Package: netbase"),
 				MatchRegexp("Version: [0-9\\.]+"),
 				ContainSubstring("Architecture: all"),
+			)))
+
+			Expect(image).To(HaveFileWithContent("/var/lib/dpkg/info/netbase.list", SatisfyAll(
+				ContainSubstring("/."),
 			)))
 
 			Expect(image).To(HaveFileWithContent("/var/lib/dpkg/status.d/openssl", SatisfyAll(
@@ -154,10 +174,18 @@ func testMetadataTinyStack(t *testing.T, context spec.G, it spec.S) {
 					ContainSubstring("Architecture: arm64")),
 			)))
 
+			Expect(image).To(HaveFileWithContent("/var/lib/dpkg/info/openssl.list", SatisfyAll(
+				ContainSubstring("/."),
+			)))
+
 			Expect(image).To(HaveFileWithContent("/var/lib/dpkg/status.d/tzdata", SatisfyAll(
 				ContainSubstring("Package: tzdata"),
 				MatchRegexp("Version: [a-z0-9\\.\\-]+ubuntu[0-9\\.]+"),
 				ContainSubstring("Architecture: all"),
+			)))
+
+			Expect(image).To(HaveFileWithContent("/var/lib/dpkg/info/tzdata.list", SatisfyAll(
+				ContainSubstring("/."),
 			)))
 
 			Expect(image).To(HaveFileWithContent("/var/lib/dpkg/status.d/zlib1g", SatisfyAll(
@@ -166,6 +194,10 @@ func testMetadataTinyStack(t *testing.T, context spec.G, it spec.S) {
 				SatisfyAny(
 					ContainSubstring("Architecture: amd64"),
 					ContainSubstring("Architecture: arm64")),
+			)))
+
+			Expect(image).To(HaveFileWithContent("/var/lib/dpkg/info/zlib1g.list", SatisfyAll(
+				ContainSubstring("/."),
 			)))
 
 			Expect(image).NotTo(HaveFile("/usr/share/ca-certificates"))
