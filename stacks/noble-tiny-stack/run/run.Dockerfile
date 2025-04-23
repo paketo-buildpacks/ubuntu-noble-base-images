@@ -15,7 +15,7 @@ ADD files/passwd /tiny/etc/passwd
 ADD files/nsswitch.conf /tiny/etc/nsswitch.conf
 ADD files/group /tiny/etc/group
 
-RUN mkdir -p /tiny/tmp /tiny/var/lib/dpkg/status.d/
+RUN mkdir -p /tiny/tmp /tiny/var/lib/dpkg/status.d/ /tiny/var/lib/dpkg/info/
 
 # We can't use dpkg -i (even with --instdir=/tiny) because we don't want to
 # install the dependencies, and dpkg-deb has no way to ignore all dependencies;
@@ -23,7 +23,12 @@ RUN mkdir -p /tiny/tmp /tiny/var/lib/dpkg/status.d/
 RUN apt download $packages \
     && for pkg in $packages; do \
       dpkg-deb --field $pkg*.deb > /tiny/var/lib/dpkg/status.d/$pkg \
-      && dpkg-deb --extract $pkg*.deb /tiny; \
+      && dpkg-deb --extract $pkg*.deb /tiny \
+      && dpkg-deb -c $pkg*.deb | \
+        sed -e 's| -> .*||' \
+            -e 's|.* ||p' | \
+        sed -e 's|^\./|/|' \
+            -e 's|^/$|/.|' > /tiny/var/lib/dpkg/info/$pkg.list; \
     done
 
 RUN ./install-certs.sh
