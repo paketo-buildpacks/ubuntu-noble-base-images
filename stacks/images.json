@@ -13,11 +13,9 @@
       "output_dir": "builds/noble-tiny-stack",
       "build_image": "build",
       "run_image": "run",
-      "build_receipt_filename": "build-receipt.cyclonedx.json",
-      "run_receipt_filename": "run-receipt.cyclonedx.json",
       "stack_type": "tiny",
-      "pattern_image_registry_name": "os-os_codename-build_image_run_image-stack_type",
-      "pattern_assets_prefix": "os_codename-stack_type-repo_type"
+      "pattern_image_registry_name": "os_name-os_codename-build_image_run_image-stack_type",
+      "pattern_assets_prefix": "os_name-os_codename-build_image_run_image-stak_type-version-arch"
     },
     {
       "name": "noble-static",
@@ -28,8 +26,8 @@
       "build_receipt_filename": "build-receipt.cyclonedx.json",
       "run_receipt_filename": "run-receipt.cyclonedx.json",
       "stack_type": "static",
-      "pattern_image_registry_name": "os-os_codename-build_image_run_image-stack_type",
-      "pattern_assets_prefix": "os_codename-stack_type-repo_type"
+      "pattern_image_registry_name": "os_name-os_codename-build_image_run_image-stack_type",
+      "pattern_assets_prefix": "os_name-os_codename-build_image_run_image-stack_type-version-arch"
     },
     {
       "name": "noble-base",
@@ -37,12 +35,10 @@
       "output_dir": "builds/noble-base-stack",
       "build_image": "build",
       "run_image": "run",
-      "build_receipt_filename": "build-receipt.cyclonedx.json",
-      "run_receipt_filename": "run-receipt.cyclonedx.json",
       "create_build_image": true,
       "stack_type": "base",
-      "pattern_image_registry_name": "os-os_codename-build_image_run_image",
-      "pattern_assets_prefix": "os_codename-repo_type"
+      "pattern_image_registry_name": "os_name-os_codename-build_image_run_image",
+      "pattern_assets_prefix": "os_name-os_codename-build_image_run_image-version-arch"
     }
   ]
 }

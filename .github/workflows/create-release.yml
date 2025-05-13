@@ -241,25 +241,37 @@ jobs:
         os_codename="${{ needs.preparation.outputs.os_codename }}"
         stack_type="${{ matrix.stacks.stack_type }}"
         repo_type="${{ needs.preparation.outputs.repo_type }}"
+        build_image="${{ matrix.stacks.build_image }}"
+        run_image="${{ matrix.stacks.run_image }}"
         pattern_assets_prefix="${{ matrix.stacks.pattern_assets_prefix }}"
+        arch=${{ matrix.arch.name }}
 
         if [[ "${{ matrix.arch.name }}" == "amd64" ]]; then
-          if [ $pattern_assets_prefix == "os_codename-stack_type-repo_type" ]; then
-            echo "build=${os_codename}-${stack_type}-${repo_type}-\\d+\\.\\d+(\\.\\d+)?-${{ matrix.stacks.build_receipt_filename }}" >> "$GITHUB_OUTPUT"
-            echo "run=${os_codename}-${stack_type}-${repo_type}-\\d+\\.\\d+(\\.\\d+)?-${{ matrix.stacks.run_receipt_filename }}" >> "$GITHUB_OUTPUT"
-          elif [ $pattern_assets_prefix == "os_codename-repo_type" ]; then
-            echo "build=${os_codename}-${repo_type}-\\d+\\.\\d+(\\.\\d+)?-${{ matrix.stacks.build_receipt_filename }}" >> "$GITHUB_OUTPUT"
-            echo "run=${os_codename}-${repo_type}-\\d+\\.\\d+(\\.\\d+)?-${{ matrix.stacks.run_receipt_filename }}" >> "$GITHUB_OUTPUT"
+          if [ $pattern_assets_prefix == "os_codename-stack_type-repo_type-version-arch-build_image_run_image" ]; then
+            echo "build=${os_codename}-${stack_type}-${repo_type}-\\d+\\.\\d+(\\.\\d+)?-${build_image}-receipt.cyclonedx.json"
+            echo "run=${os_codename}-${stack_type}-${repo_type}-\\d+\\.\\d+(\\.\\d+)?-${run_image}-receipt.cyclonedx.json"
+          elif [ $pattern_assets_prefix == "os_name-os_codename-build_image_run_image-stack_type-version-arch" ]; then
+            echo "build=${os_name}-${os_codename}-${build_image}-${stack_type}-\\d+\\.\\d+(\\.\\d+)?-receipt.cyclonedx.json"
+            echo "run=${os_name}-${os_codename}-${run_image}-${stack_type}-\\d+\\.\\d+(\\.\\d+)?-receipt.cyclonedx.json"
+          elif [ $pattern_assets_prefix == "os_name-os_codename-build_image_run_image-version-arch" ]; then
+            echo "build=${os_name}-${os_codename}-${build_image}-\\d+\\.\\d+(\\.\\d+)?-receipt.cyclonedx.json"
+            echo "run=${os_name}-${os_codename}-${run_image}-\\d+\\.\\d+(\\.\\d+)?-receipt.cyclonedx.json"
           fi
         else
-          if [ $pattern_assets_prefix == "os_codename-stack_type-repo_type" ]; then
-            echo "build=${os_codename}-${stack_type}-${repo_type}-\\d+\\.\\d+(\\.\\d+)?-${{ matrix.arch.name }}-${{ matrix.stacks.build_receipt_filename }}" >> "$GITHUB_OUTPUT"
-            echo "run=${os_codename}-${stack_type}-${repo_type}-\\d+\\.\\d+(\\.\\d+)?-${{ matrix.arch.name }}-${{ matrix.stacks.run_receipt_filename }}" >> "$GITHUB_OUTPUT"
-          elif [ $pattern_assets_prefix == "os_codename-repo_type" ]; then
-            echo "build=${os_codename}-${repo_type}-\\d+\\.\\d+(\\.\\d+)?-${{ matrix.arch.name }}-${{ matrix.stacks.build_receipt_filename }}" >> "$GITHUB_OUTPUT"
-            echo "run=${os_codename}-${repo_type}-\\d+\\.\\d+(\\.\\d+)?-${{ matrix.arch.name }}-${{ matrix.stacks.run_receipt_filename }}" >> "$GITHUB_OUTPUT"
+          if [ $pattern_assets_prefix == "os_codename-stack_type-repo_type-version-arch-build_image_run_image" ]; then
+            echo "build=${os_codename}-${stack_type}-${repo_type}-\\d+\\.\\d+(\\.\\d+)?-${arch}-${build_image}-receipt.cyclonedx.json"
+            echo "run=${os_codename}-${stack_type}-${repo_type}-\\d+\\.\\d+(\\.\\d+)?-${arch}-${run_image}-receipt.cyclonedx.json"
+          elif [ $pattern_assets_prefix == "os_name-os_codename-build_image_run_image-stack_type-version-arch" ]; then
+            echo "build=${os_name}-${os_codename}-${build_image}-${stack_type}-\\d+\\.\\d+(\\.\\d+)?-${arch}-receipt.cyclonedx.json"
+            echo "run=${os_name}-${os_codename}-${run_image}-${stack_type}-\\d+\\.\\d+(\\.\\d+)?-${arch}-receipt.cyclonedx.json"
+          elif [ $pattern_assets_prefix == "os_name-os_codename-build_image_run_image-version-arch" ]; then
+            echo "build=${os_name}-${os_codename}-${build_image}-\\d+\\.\\d+(\\.\\d+)?-${arch}-receipt.cyclonedx.json"
+            echo "run=${os_name}-${os_codename}-${run_image}-\\d+\\.\\d+(\\.\\d+)?-${arch}-receipt.cyclonedx.json"
           fi
         fi
+
+        echo "build=${build}" >> "$GITHUB_OUTPUT"
+        echo "run=${run}" >> "$GITHUB_OUTPUT"
 
     - name: Write Empty Previous Build Receipt
       if: ${{ matrix.stacks.create_build_image == false || matrix.arch.is_new == true || matrix.stacks.is_new == true || steps.check_previous.outputs.exists == 'false' }}
@@ -315,14 +327,14 @@ jobs:
         os_codename="${{ needs.preparation.outputs.os_codename }}"
         stack_type="${{ matrix.stacks.stack_type }}"
         repo_type="${{ needs.preparation.outputs.repo_type }}"
+        build_image="${{ matrix.stacks.build_image }}"
+        run_image="${{ matrix.stacks.run_image }}"
         pattern_assets_prefix="${{ matrix.stacks.pattern_assets_prefix }}"
 
-        if [ $pattern_assets_prefix == "os_codename-stack_type-repo_type" ]; then
-          asset_prefix="${os_codename}-${stack_type}-${repo_type}"
-        elif [ $pattern_assets_prefix == "os_codename-repo_type" ]; then
-          asset_prefix="${os_codename}-${repo_type}"
-        else
-          asset_prefix="${{ needs.preparation.outputs.github_repo_name }}"
+        if [ $pattern_assets_prefix == "os_name-os_codename-build_image_run_image-stack_type-version-arch" ]; then
+          asset_prefix="${os_name}-${os_codename}-${stack_type}"
+        elif [ $pattern_assets_prefix == "os_name-os_codename-build_image_run_image-version-arch" ]; then
+          asset_prefix="${os_name}-${os_codename}"
         fi
 
         arch_prefix=""
@@ -404,23 +416,25 @@ jobs:
         os_codename="${{ needs.preparation.outputs.os_codename }}"
         stack_type="${{ matrix.stacks.stack_type }}"
         repo_type="${{ needs.preparation.outputs.repo_type }}"
+        build_image="${{ matrix.stacks.build_image }}"
+        run_image="${{ matrix.stacks.run_image }}"
         pattern_assets_prefix="${{ matrix.stacks.pattern_assets_prefix }}"
-
-        build_image=$(echo "$stack" | jq -r '.build_image')
-        run_image=$(echo "$stack" | jq -r '.run_image')
+        arch=${{ matrix.arch.name }}
 
         if [ "${{ matrix.arch.name }}" = "amd64" ]; then
-          if [ $pattern_assets_prefix == "os_codename-stack_type-repo_type" ]; then
+          if [ $pattern_assets_prefix == "os_codename-stack_type-repo_type-version-arch-build_image_run_image" ]; then
             echo "build=${os_codename}-${stack_type}-${repo_type}-\\d+.\\d+(.\\d+)?-${build_image}.oci.sha256" >> "$GITHUB_OUTPUT"
             echo "run=${os_codename}-${stack_type}-${repo_type}-\\d+.\\d+(.\\d+)?-${run_image}.oci.sha256" >> "$GITHUB_OUTPUT"
-          elif [ $pattern_assets_prefix == "os_codename-repo_type" ]; then
-            echo "build=${os_codename}-${repo_type}-\\d+.\\d+(.\\d+)?-${build_image}.oci.sha256" >> "$GITHUB_OUTPUT"
-            echo "run=${os_codename}-${repo_type}-\\d+.\\d+(.\\d+)?-${run_image}.oci.sha256" >> "$GITHUB_OUTPUT"
           fi
         else
-          echo "build=-${{ matrix.arch.name }}-${{ matrix.stacks.build_image }}.oci.sha256" >> "$GITHUB_OUTPUT"
-          echo "run=-${{ matrix.arch.name }}-${{ matrix.stacks.run_image }}.oci.sha256" >> "$GITHUB_OUTPUT"
+          if [ $pattern_assets_prefix == "os_codename-stack_type-repo_type-version-arch-build_image_run_image" ]; then
+            echo "build=${os_codename}-${stack_type}-${repo_type}-\\d+.\\d+(.\\d+)?-${arch}-${build_image}.oci.sha256" >> "$GITHUB_OUTPUT"
+            echo "run=${os_codename}-${stack_type}-${repo_type}-\\d+.\\d+(.\\d+)?-${arch}-${run_image}.oci.sha256" >> "$GITHUB_OUTPUT"
+          fi
         fi
+
+        echo "build=${build}" >> "$GITHUB_OUTPUT"
+        echo "run=${run}" >> "$GITHUB_OUTPUT"
 
     - name: Find and Download Previous build image hash code of stack ${{ matrix.stacks.build_image }}
       if: ${{ matrix.stacks.create_build_image == true }}
@@ -651,23 +665,6 @@ jobs:
         pattern: current-*-receipt-${{ matrix.stacks.name }}
         path: receipt-files
 
-    - name: Move/Rename Build receipt properly
-      if: ${{ matrix.stacks.create_build_image == true }}
-      run: |
-        arch_prefix="${{ matrix.arch.name }}-"
-        if [[ "${{ matrix.arch.name }}" == "amd64" ]]; then
-          arch_prefix=""
-        fi
-        mv receipt-files/current-build-receipt-${{ matrix.stacks.name }}/${arch_prefix}current-build-receipt-${{ matrix.stacks.name }} ./${{ matrix.arch.name }}-current-build-receipt-${{ matrix.stacks.name }}
-
-    - name: Move/Rename Run receipt properly
-      run: |
-        arch_prefix="${{ matrix.arch.name }}-"
-        if [[ "${{ matrix.arch.name }}" == "amd64" ]]; then
-          arch_prefix=""
-        fi
-        mv receipt-files/current-run-receipt-${{ matrix.stacks.name }}/${arch_prefix}current-run-receipt-${{ matrix.stacks.name }} ./${{ matrix.arch.name }}-current-run-receipt-${{ matrix.stacks.name }}
-
     - name: Check for Previous Releases
       id: check_previous
       run: |
@@ -700,25 +697,37 @@ jobs:
         os_codename="${{ needs.preparation.outputs.os_codename }}"
         stack_type="${{ matrix.stacks.stack_type }}"
         repo_type="${{ needs.preparation.outputs.repo_type }}"
+        build_image="${{ matrix.stacks.build_image }}"
+        run_image="${{ matrix.stacks.run_image }}"
         pattern_assets_prefix="${{ matrix.stacks.pattern_assets_prefix }}"
+        arch=${{ matrix.arch.name }}
 
         if [[ "${{ matrix.arch.name }}" == "amd64" ]]; then
-          if [ $pattern_assets_prefix == "os_codename-stack_type-repo_type" ]; then
-            echo "build_filename=${os_codename}-${stack_type}-${repo_type}-\\d+\\.\\d+(\\.\\d+)?-${{ matrix.stacks.build_receipt_filename }}" >> "$GITHUB_OUTPUT"
-            echo "run_filename=${os_codename}-${stack_type}-${repo_type}-\\d+\\.\\d+(\\.\\d+)?-${{ matrix.stacks.run_receipt_filename }}" >> "$GITHUB_OUTPUT"
-          elif [ $pattern_assets_prefix == "os_codename-repo_type" ]; then
-            echo "build_filename=${os_codename}-${repo_type}-\\d+\\.\\d+(\\.\\d+)?-${{ matrix.stacks.build_receipt_filename }}" >> "$GITHUB_OUTPUT"
-            echo "run_filename=${os_codename}-${repo_type}-\\d+\\.\\d+(\\.\\d+)?-${{ matrix.stacks.run_receipt_filename }}" >> "$GITHUB_OUTPUT"
+          if [ $pattern_assets_prefix == "os_codename-stack_type-repo_type-version-arch-build_image_run_image" ]; then
+            echo "build=${os_codename}-${stack_type}-${repo_type}-\\d+\\.\\d+(\\.\\d+)?-${build_image}-receipt.cyclonedx.json"
+            echo "run=${os_codename}-${stack_type}-${repo_type}-\\d+\\.\\d+(\\.\\d+)?-${run_image}-receipt.cyclonedx.json"
+          elif [ $pattern_assets_prefix == "os_name-os_codename-build_image_run_image-stack_type-version-arch" ]; then
+            echo "build=${os_name}-${os_codename}-${build_image}-${stack_type}-\\d+\\.\\d+(\\.\\d+)?-receipt.cyclonedx.json"
+            echo "run=${os_name}-${os_codename}-${run_image}-${stack_type}-\\d+\\.\\d+(\\.\\d+)?-receipt.cyclonedx.json"
+          elif [ $pattern_assets_prefix == "os_name-os_codename-build_image_run_image-version-arch" ]; then
+            echo "build=${os_name}-${os_codename}-${build_image}-\\d+\\.\\d+(\\.\\d+)?-receipt.cyclonedx.json"
+            echo "run=${os_name}-${os_codename}-${run_image}-\\d+\\.\\d+(\\.\\d+)?-receipt.cyclonedx.json"
           fi
         else
-          if [ $pattern_assets_prefix == "os_codename-stack_type-repo_type" ]; then
-            echo "build_filename=${os_codename}-${stack_type}-${repo_type}-\\d+\\.\\d+(\\.\\d+)?-${{ matrix.arch.name }}-${{ matrix.stacks.build_receipt_filename }}" >> "$GITHUB_OUTPUT"
-            echo "run_filename=${os_codename}-${stack_type}-${repo_type}-\\d+\\.\\d+(\\.\\d+)?-${{ matrix.arch.name }}-${{ matrix.stacks.run_receipt_filename }}" >> "$GITHUB_OUTPUT"
-          elif [ $pattern_assets_prefix == "os_codename-repo_type" ]; then
-            echo "build_filename=${os_codename}-${repo_type}-\\d+\\.\\d+(\\.\\d+)?-${{ matrix.arch.name }}-${{ matrix.stacks.build_receipt_filename }}" >> "$GITHUB_OUTPUT"
-            echo "run_filename=${os_codename}-${repo_type}-\\d+\\.\\d+(\\.\\d+)?-${{ matrix.arch.name }}-${{ matrix.stacks.run_receipt_filename }}" >> "$GITHUB_OUTPUT"
+          if [ $pattern_assets_prefix == "os_codename-stack_type-repo_type-version-arch-build_image_run_image" ]; then
+            echo "build=${os_codename}-${stack_type}-${repo_type}-\\d+\\.\\d+(\\.\\d+)?-${arch}-${build_image}-receipt.cyclonedx.json"
+            echo "run=${os_codename}-${stack_type}-${repo_type}-\\d+\\.\\d+(\\.\\d+)?-${arch}-${run_image}-receipt.cyclonedx.json"
+          elif [ $pattern_assets_prefix == "os_name-os_codename-build_image_run_image-stack_type-version-arch" ]; then
+            echo "build=${os_name}-${os_codename}-${build_image}-${stack_type}-\\d+\\.\\d+(\\.\\d+)?-${arch}-receipt.cyclonedx.json"
+            echo "run=${os_name}-${os_codename}-${run_image}-${stack_type}-\\d+\\.\\d+(\\.\\d+)?-${arch}-receipt.cyclonedx.json"
+          elif [ $pattern_assets_prefix == "os_name-os_codename-build_image_run_image-version-arch" ]; then
+            echo "build=${os_name}-${os_codename}-${build_image}-\\d+\\.\\d+(\\.\\d+)?-${arch}-receipt.cyclonedx.json"
+            echo "run=${os_name}-${os_codename}-${run_image}-\\d+\\.\\d+(\\.\\d+)?-${arch}-receipt.cyclonedx.json"
           fi
         fi
+
+        echo "build_filename=${build}" >> "$GITHUB_OUTPUT"
+        echo "run_filename=${run}" >> "$GITHUB_OUTPUT"
 
     - name: Find and Download Previous Build Receipt
       if: ${{ matrix.stacks.create_build_image == true &&  steps.check_previous.outputs.exists == 'true' && matrix.arch.is_new == false && matrix.stacks.is_new == false }}
@@ -864,10 +873,10 @@ jobs:
 
         pattern_image_registry_name="${{ matrix.stacks.pattern_image_registry_name }}"
 
-        if [ $pattern_image_registry_name == "os-os_codename-build_image_run_image-stack_type" ]; then
+        if [ $pattern_image_registry_name == "os_name-os_codename-build_image_run_image-stack_type" ]; then
           echo "build_image=${{ needs.preparation.outputs.repo_owner }}/${os_name}-${os_codename}-${{ matrix.stacks.build_image }}-${stack_type}:${{ steps.tag.outputs.tag }}"
           echo "run_image=${{ needs.preparation.outputs.repo_owner }}/${os_name}-${os_codename}-${{ matrix.stacks.run_image }}-${stack_type}:${{ steps.tag.outputs.tag }}"
-        elif [ $pattern_image_registry_name == "os-os_codename-build_image_run_image" ]; then
+        elif [ $pattern_image_registry_name == "os_name-os_codename-build_image_run_image" ]; then
           echo "build_image=${{ needs.preparation.outputs.repo_owner }}/${os_name}-${os_codename}-${{ matrix.stacks.build_image }}:${{ steps.tag.outputs.tag }}"
           echo "run_image=${{ needs.preparation.outputs.repo_owner }}/${os_name}-${os_codename}-${{ matrix.stacks.run_image }}:${{ steps.tag.outputs.tag }}"
         elif [ $pattern_image_registry_name == "build_image_run_image-os_codename-stack_type" ]; then
@@ -1103,7 +1112,9 @@ jobs:
         stacks=$(echo '${{ needs.preparation.outputs.stacks }}' | jq -c '.[]')
         archs=$(echo '${{ needs.preparation.outputs.architectures }}' | jq -c -r '.[]')
         tag="${{ steps.tag.outputs.tag }}"
+        version="${{ steps.tag.outputs.tag }}"
         os_codename="${{ needs.preparation.outputs.os_codename }}"
+        os_name="${{needs.preparation.outputs.os_name}}"
         repo_type="${{ needs.preparation.outputs.repo_type }}"
 
         # Start with an empty array
@@ -1111,49 +1122,58 @@ jobs:
 
         for stack in $stacks; do
           stack_name=$(echo "$stack" | jq -r '.name')
-          run_image=$(echo "$stack" | jq -r '.run_image')
           create_build_image=$(echo "$stack" | jq -r '.create_build_image // false')
           stack_type=$(echo "$stack" | jq -r '.stack_type // ""')
           pattern_assets_prefix=$(echo "$stack" | jq -r '.pattern_assets_prefix // ""')
 
-          if [ $pattern_assets_prefix == "os_codename-stack_type-repo_type" ]; then
-            asset_prefix="${os_codename}-${stack_type}-${repo_type}"
-          elif [ $pattern_assets_prefix == "os_codename-repo_type" ]; then
-            asset_prefix="${os_codename}-${repo_type}"
+          # Adding the .oci artifacts for the build image to the assets
+          run_image=$(echo "$stack" | jq -r '.run_image')
+          if [ $pattern_assets_prefix == "os_name-os_codename-build_image_run_image-stack_type-version-arch" ]; then
+            asset_prefix="${os_name}-${os_codename}-${run_image}-${stack_type}-${version}"
+          elif [ $pattern_assets_prefix == "os_name-os_codename-build_image_run_image-version-arch" ]; then
+            asset_prefix="${os_name}-${os_codename}-${run_image}-${version}"
+          elif [ $pattern_assets_prefix == "os_codename-stack_type-repo_type-version-arch-build_image_run_image" ]; then
+            asset_prefix="${os_codename}-${stack_type}-${repo_type}-${version}-${run_image}"
           fi
 
           assets="$(jq -c \
             --arg image_filepath "image-files" \
             --arg stack_name "${stack_name}" \
-            --arg run_image "${run_image}" \
-            --arg tag "${{ steps.tag.outputs.tag }}" \
             --arg asset_prefix "$asset_prefix" \
             '. += [
                 {
                   "path": ($image_filepath + "/" + "current-run-image-" + $stack_name + "/run" + ".oci"),
-                  "name": ($asset_prefix + "-" + $tag + "-" + $run_image + ".oci"),
+                  "name": ($asset_prefix + ".oci"),
                   "content_type": "application/gzip"
                 }
               ]' <<<"${assets}")"
 
+          # Adding the .oci artifacts for the build image to the assets
           if [[ $create_build_image == true ]]; then
+
             build_image=$(echo "$stack" | jq -r '.build_image')
+            if [ $pattern_assets_prefix == "os_name-os_codename-build_image_run_image-stack_type-version-arch" ]; then
+              asset_prefix="${os_name}-${os_codename}-${build_image}-${stack_type}-${version}"
+            elif [ $pattern_assets_prefix == "os_name-os_codename-build_image_run_image-version-arch" ]; then
+              asset_prefix="${os_name}-${os_codename}-${build_image}-${version}"
+            elif [ $pattern_assets_prefix == "os_codename-stack_type-repo_type-version-arch-build_image_run_image" ]; then
+              asset_prefix="${os_codename}-${stack_type}-${repo_type}-${version}-${build_image}"
+            fi
+
             assets="$(jq -c \
               --arg image_filepath "image-files" \
               --arg stack_name "${stack_name}" \
-              --arg build_image "${build_image}" \
-              --arg tag "${{ steps.tag.outputs.tag }}" \
               --arg asset_prefix "$asset_prefix" \
               '. += [
                   {
                     "path": ($image_filepath + "/" + "current-build-image-" + $stack_name + "/build" + ".oci"),
-                    "name": ($asset_prefix + "-" + $tag + "-" + $build_image + ".oci"),
+                    "name": ($asset_prefix + ".oci"),
                     "content_type": "application/gzip"
                   }
                 ]' <<<"${assets}")"
           fi
 
-          # Add the hash code files to the assets
+          # Adding the hash code files to the assets
           if [ "${{ needs.preparation.outputs.polling_type }}" = "hash" ]; then
             for arch in $archs; do
               arch_name=$(echo "$arch" | jq -r '.name')
@@ -1162,105 +1182,111 @@ jobs:
                 arch_prefix="-"
               fi
 
-                ## Add the Hash code files of the run images to the assets
-                run_image=$(echo "$stack" | jq -r '.run_image')
+              # hash code for the run image
+              run_image=$(echo "$stack" | jq -r '.run_image')
+              if [ $pattern_assets_prefix == "os_codename-stack_type-repo_type-version-arch-build_image_run_image" ]; then
+                asset_prefix="${os_codename}-${stack_type}-${repo_type}-${version}"
+              fi
+
+              ## Add the Hash code files of the run images to the assets
+              run_image=$(echo "$stack" | jq -r '.run_image')
+              assets="$(jq -c \
+                --arg hash_code_filepath "hash-code-files" \
+                --arg stack_name "${stack_name}" \
+                --arg run_image "${run_image}" \
+                --arg asset_prefix "$asset_prefix" \
+                --arg arch "${arch_name}" \
+                --arg arch_prefix "${arch_prefix}" \
+                '. += [
+                  {
+                    "path": ($hash_code_filepath + "/" + "hash-code-current-run-image-"+ $arch + "-" + $stack_name ),
+                    "name": ($asset_prefix + $arch_prefix + $run_image + ".oci.sha256"),
+                    "content_type": "text/plain"
+                  }
+                ]' <<<"${assets}")"
+
+              ## Add the Hash code files of the build images to the assets
+              if [[ $create_build_image == true ]]; then
+
+                build_image=$(echo "$stack" | jq -r '.build_image')
+                if [ $pattern_assets_prefix == "os_codename-stack_type-repo_type-version-arch-build_image_run_image" ]; then
+                  asset_prefix="${os_codename}-${stack_type}-${repo_type}-${version}"
+                fi
+
+                build_image=$(echo "$stack" | jq -r '.build_image')
                 assets="$(jq -c \
                   --arg hash_code_filepath "hash-code-files" \
                   --arg stack_name "${stack_name}" \
-                  --arg run_image "${run_image}" \
-                  --arg tag "${{ steps.tag.outputs.tag }}" \
+                  --arg build_image "${build_image}" \
                   --arg asset_prefix "$asset_prefix" \
                   --arg arch "${arch_name}" \
                   --arg arch_prefix "${arch_prefix}" \
                   '. += [
                     {
-                      "path": ($hash_code_filepath + "/" + "hash-code-current-run-image-"+ $arch + "-" + $stack_name ),
-                      "name": ($asset_prefix + "-" + $tag + $arch_prefix + $run_image + ".oci.sha256"),
+                      "path": ($hash_code_filepath + "/" + "hash-code-current-build-image-"+ $arch + "-" + $stack_name ),
+                      "name": ($asset_prefix + "-" + $tag + $arch_prefix + $build_image + ".oci.sha256"),
                       "content_type": "text/plain"
                     }
                   ]' <<<"${assets}")"
+              fi
+            done
+          fi
 
-                ## Add the Hash code files of the build images to the assets
-                if [[ $create_build_image == true ]]; then
-                  build_image=$(echo "$stack" | jq -r '.build_image')
-                  assets="$(jq -c \
-                    --arg hash_code_filepath "hash-code-files" \
-                    --arg stack_name "${stack_name}" \
-                    --arg build_image "${build_image}" \
-                    --arg tag "${{ steps.tag.outputs.tag }}" \
-                    --arg asset_prefix "$asset_prefix" \
-                    --arg arch "${arch_name}" \
-                    --arg arch_prefix "${arch_prefix}" \
-                    '. += [
-                      {
-                        "path": ($hash_code_filepath + "/" + "hash-code-current-build-image-"+ $arch + "-" + $stack_name ),
-                        "name": ($asset_prefix + "-" + $tag + $arch_prefix + $build_image + ".oci.sha256"),
-                        "content_type": "text/plain"
-                      }
-                    ]' <<<"${assets}")"
-                fi
-              done
-            fi
-        done
-
-        ## Adding the SBOM files to the assets
-        for stack in $stacks; do
+          # Adding the SBOM files to the artifacts
           for arch in $archs; do
             arch_name=$(echo "$arch" | jq -r '.name')
-            stack_name=$(echo "$stack" | jq -r '.name')
-            run_receipt_filename=$(echo "$stack" | jq -r '.run_receipt_filename')
-            stack_type=$(echo "$stack" | jq -r '.stack_type // ""')
-            pattern_assets_prefix=$(echo "$stack" | jq -r '.pattern_assets_prefix // ""')
-  
-            if [ $pattern_assets_prefix == "os_codename-stack_type-repo_type" ]; then
-              asset_prefix="${os_codename}-${stack_type}-${repo_type}"
-            elif [ $pattern_assets_prefix == "os_codename-repo_type" ]; then
-              asset_prefix="${os_codename}-${repo_type}"
+            arch_prefix="-${arch_name}-"
+            if [[ $arch_name == "amd64" ]]; then
+              arch_prefix="-"
             fi
 
-            run_receipt_file_name=$(
-              echo '[ "'"$arch_name"'" ,"current-run-receipt" , "'"$stack_name"'"  ]' |
-                jq -r 'map(select(. != "amd64")) | join("-")'
-            )
-
-            receipt_asset_name=$(
-              echo '[ "'"$asset_prefix"'", "'"$tag"'", "'"$arch_name"'", "'"$run_receipt_filename"'"  ]' |
-                jq -r 'map(select(. != "amd64")) | map(select(. != "default")) | join("-")'
-            )
+            # SBOM for the run image
+            run_image=$(echo "$stack" | jq -r '.run_image')
+            if [ $pattern_assets_prefix == "os_name-os_codename-build_image_run_image-stack_type-version-arch" ]; then
+              asset_prefix="${os_name}-${os_codename}-${run_image}-${stack_type}-${version}"
+            elif [ $pattern_assets_prefix == "os_name-os_codename-build_image_run_image-version-arch" ]; then
+              asset_prefix="${os_name}-${os_codename}-${run_image}-${version}"
+            elif [ $pattern_assets_prefix == "os_codename-stack_type-repo_type-version-arch-build_image_run_image" ]; then
+              asset_prefix="${os_codename}-${stack_type}-${repo_type}-${version}-${run_image}"
+            fi
 
             assets="$(jq -c \
-              --arg run_receipt_file_name "${run_receipt_file_name}" \
-              --arg receipt_asset_name "${receipt_asset_name}" \
+              --arg sbom_filepath "receipt-files" \
+              --arg stack_name "${stack_name}" \
+              --arg asset_prefix "$asset_prefix" \
+              --arg arch "${arch_name}" \
+              --arg arch_prefix "${arch_prefix}" \
               '. += [
-                  {
-                    "path": ("receipt-files" + "/" + $run_receipt_file_name),
-                    "name": $receipt_asset_name,
-                    "content_type": "text/plain"
-                  }
-                ]' <<<"${assets}")"
+                {
+                  "path": ($sbom_filepath + "/" + $arch + "-" + "current-run-receipt"+ "-" + $stack_name ),
+                  "name": ($asset_prefix + $arch_prefix + "-" + "receipt.cyclonedx.json"),
+                  "content_type": "text/plain"
+                }
+              ]' <<<"${assets}")"
 
-            create_build_image=$(echo "$stack" | jq -r '.create_build_image // false')
-
+            ## Add the Hash code files of the build images to the assets
             if [[ $create_build_image == true ]]; then
-              build_receipt_filename=$(echo "$stack" | jq -r '.build_receipt_filename')
 
-              build_receipt_file_name=$(
-                echo '[ "'"$arch_name"'" ,"current-build-receipt" , "'"$stack_name"'"  ]' |
-                  jq -r 'map(select(. != "amd64")) | join("-")'
-              )
-
-              receipt_asset_name=$(
-                echo '[ "'"$asset_prefix"'", "'"$tag"'", "'"$arch_name"'", "'"$build_receipt_filename"'"  ]' |
-                  jq -r 'map(select(. != "amd64")) | map(select(. != "default")) | join("-")'
-              )
+              # SBOM for the run image
+              build_image=$(echo "$stack" | jq -r '.build_image')
+              if [ $pattern_assets_prefix == "os_name-os_codename-build_image_run_image-stack_type-version-arch" ]; then
+                asset_prefix="${os_name}-${os_codename}-${build_image}-${stack_type}-${version}"
+              elif [ $pattern_assets_prefix == "os_name-os_codename-build_image_run_image-version-arch" ]; then
+                asset_prefix="${os_name}-${os_codename}-${build_image}-${version}"
+              elif [ $pattern_assets_prefix == "os_codename-stack_type-repo_type-version-arch-build_image_run_image" ]; then
+                asset_prefix="${os_codename}-${stack_type}-${repo_type}-${version}-${build_image}"
+              fi
 
               assets="$(jq -c \
-                --arg build_receipt_file_name "${build_receipt_file_name}" \
-                --arg receipt_asset_name "${receipt_asset_name}" \
+                --arg sbom_filepath "receipt-files" \
+                --arg stack_name "${stack_name}" \
+                --arg asset_prefix "$asset_prefix" \
+                --arg arch "${arch_name}" \
+                --arg arch_prefix "${arch_prefix}" \
                 '. += [
                   {
-                    "path": ("receipt-files" + "/" + $build_receipt_file_name),
-                    "name": $receipt_asset_name,
+                    "path": ($sbom_filepath + "/" + $arch + "-" + "current-build-receipt"+ "-" + $stack_name ),
+                    "name": ($asset_prefix + $arch_prefix + "-" + "receipt.cyclonedx.json"),
                     "content_type": "text/plain"
                   }
                 ]' <<<"${assets}")"
@@ -1272,13 +1298,16 @@ jobs:
         if [ "${{ needs.preparation.outputs.polling_type }}" = "usn" ]; then
           for stack in $stacks; do
             stack_name=$(echo "$stack" | jq -r '.name')
-            stack_type=$(echo "$stack" | jq -r '.stack_type // ""')
+            os_codename="${{ needs.preparation.outputs.os_codename }}"
+            os_name="${{needs.preparation.outputs.os_name}}"
+            stack_type=$(echo "$stack" | jq -r '.stack_type')
             pattern_assets_prefix=$(echo "$stack" | jq -r '.pattern_assets_prefix // ""')
+            version="${{ steps.tag.outputs.tag }}"
 
-            if [ $pattern_assets_prefix == "os_codename-stack_type-repo_type" ]; then
-              asset_prefix="${os_codename}-${stack_type}-${repo_type}"
-            elif [ $pattern_assets_prefix == "os_codename-repo_type" ]; then
-              asset_prefix="${os_codename}-${repo_type}"
+            if [ $pattern_assets_prefix == "os_name-os_codename-build_image_run_image-stack_type-version-arch" ]; then
+              asset_prefix="${os_name}-${os_codename}-${stack_type}-${version}"
+            elif [ $pattern_assets_prefix == "os_name-os_codename-build_image_run_image-version-arch" ]; then
+              asset_prefix="${os_name}-${os_codename}-${version}"
             fi
 
             for arch in $archs; do
@@ -1291,7 +1320,6 @@ jobs:
               usn_asset_name=$(
                 echo '[
                   "'"$asset_prefix"'",
-                  "${{ steps.tag.outputs.tag }}",
                   "'"$arch_prefix"'",
                   "${{ env.PATCHED_USNS_FILENAME }}"
                 ]' | jq -r 'map(select(length > 0)) | join("-")'
@@ -1373,10 +1401,10 @@ jobs:
             pattern_image_registry_name=$(echo "$stack" | jq -r '.pattern_image_registry_name')
             create_build_image=$(echo "$stack" | jq -r '.create_build_image // false')
 
-            if [ $pattern_image_registry_name == "os-os_codename-build_image_run_image-stack_type" ]; then
+            if [ $pattern_image_registry_name == "os_name-os_codename-build_image_run_image-stack_type" ]; then
               build_image_registry_name="${{ needs.preparation.outputs.repo_owner }}/${os_name}-${os_codename}-${build_image}-${stack_type}:${{ steps.tag.outputs.tag }}"
               run_image_registry_name="${{ needs.preparation.outputs.repo_owner }}/${os_name}-${os_codename}-${run_image}-${stack_type}:${{ steps.tag.outputs.tag }}"
-            elif [ $pattern_image_registry_name == "os-os_codename-build_image_run_image" ]; then
+            elif [ $pattern_image_registry_name == "os_name-os_codename-build_image_run_image" ]; then
               build_image_registry_name="${{ needs.preparation.outputs.repo_owner }}/${os_name}-${os_codename}-${build_image}:${{ steps.tag.outputs.tag }}"
               run_image_registry_name="${{ needs.preparation.outputs.repo_owner }}/${os_name}-${os_codename}-${run_image}:${{ steps.tag.outputs.tag }}"
             elif [ $pattern_image_registry_name == "build_image_run_image-os_codename-stack_type" ]; then
