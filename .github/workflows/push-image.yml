@@ -52,7 +52,7 @@ jobs:
       id: set-matrix
       run: |
         stacks=$(jq -c '.images | .[]' ${STACKS_FILEPATH})
-        tag="${{ steps.event.outputs.tag }}"
+        version="${{ steps.event.outputs.tag }}"
         os_name=$( jq -r '.os_name' ${STACKS_FILEPATH} )
         os_codename=$( jq -r '.os_codename' ${STACKS_FILEPATH} )
         repo_type=$( jq -r '.repo_type' ${STACKS_FILEPATH} )
@@ -62,12 +62,11 @@ jobs:
 
         for stack in $stacks; do
           stack_name=$(echo "$stack" | jq -r '.name')
+          stack_type=$(echo "$stack" | jq -r '.stack_type // ""')
+
+          # .oci artifacts for the run image
           run_image=$(echo "$stack" | jq -r '.run_image')
           build_image=$(echo "$stack" | jq -r '.build_image')
-          create_build_image=$(echo "$stack" | jq -r '.create_build_image // false')
-          stack_type=$(echo "$stack" | jq -r '.stack_type // ""')
-          pattern_assets_prefix=$(echo "$stack" | jq -r '.pattern_assets_prefix // ""')
-          pattern_image_registry_name=$(echo "$stack" | jq -r '.pattern_image_registry_name // ""')
 
           if [ $pattern_assets_prefix == "os_codename-stack_type-repo_type" ]; then
             asset_prefix="${os_codename}-${stack_type}-${repo_type}"
@@ -75,10 +74,23 @@ jobs:
             asset_prefix="${os_codename}-${repo_type}"
           fi
 
-          if [ $pattern_image_registry_name == "os-os_codename-build_image_run_image-stack_type" ]; then
+          pattern_assets_prefix=$(echo "$stack" | jq -r '.pattern_assets_prefix // ""')
+          if [[ "$pattern_assets_prefix" == "os_name-os_codename-build_image_run_image-stack_type-version-arch" ]]; then
+            run_image_asset_prefix="${os_name}-${os_codename}-${run_image}-${stack_type}-${version}"
+            build_image_asset_prefix="${os_name}-${os_codename}-${build_image}-${stack_type}-${version}"
+          elif [[ "$pattern_assets_prefix" == "os_name-os_codename-build_image_run_image-version-arch" ]]; then
+            run_image_asset_prefix="${os_name}-${os_codename}-${run_image}-${version}"
+            build_image_asset_prefix="${os_name}-${os_codename}-${build_image}-${version}"
+          elif [[ "$pattern_assets_prefix" == "os_codename-stack_type-repo_type-version-arch-build_image_run_image" ]]; then
+            run_image_asset_prefix="${os_codename}-${stack_type}-${repo_type}-${version}-${run_image}"
+            build_image_asset_prefix="${os_codename}-${stack_type}-${repo_type}-${version}-${build_image}"
+          fi
+
+          pattern_image_registry_name=$(echo "$stack" | jq -r '.pattern_image_registry_name // ""')
+          if [ $pattern_image_registry_name == "os_name-os_codename-build_image_run_image-stack_type" ]; then
             build_image_registry_name="${os_name}-${os_codename}-${build_image}-${stack_type}"
             run_image_registry_name="${os_name}-${os_codename}-${run_image}-${stack_type}"
-          elif [ $pattern_image_registry_name == "os-os_codename-build_image_run_image" ]; then
+          elif [ $pattern_image_registry_name == "os_name-os_codename-build_image_run_image" ]; then
             build_image_registry_name="${os_name}-${os_codename}-${build_image}"
             run_image_registry_name="${os_name}-${os_codename}-${run_image}"
           elif [ $pattern_image_registry_name == "build_image_run_image-os_codename-stack_type" ]; then
@@ -87,31 +99,33 @@ jobs:
           fi
 
           asset_names="$(jq -c \
-            --arg image_filepath "image-files" \
-            --arg stack_name "${stack_name}" \
-            --arg run_image "${run_image}" \
-            --arg tag "${tag}" \
-            --arg asset_prefix "$asset_prefix" \
-            --arg run_image_registry_name "${run_image_registry_name}" \
-            '. += [
-                {
-                  "name": ($asset_prefix + "-" + $tag + "-" + $run_image),
-                  "registry_name": $run_image_registry_name
-                }
-              ]' <<<"${asset_names}")"
+          --arg image_filepath "image-files" \
+          --arg stack_name "${stack_name}" \
+          --arg run_image_asset_prefix "${run_image_asset_prefix}" \
+          --arg run_image_registry_name "${run_image_registry_name}" \
+          '. += [
+              {
+                "name": $run_image_asset_prefix,
+                "path": ($image_filepath + "/" + "current-run-image-" + $stack_name + "/run" + ".oci"),
+                "registry_name": $run_image_registry_name
+              }
+            ]' <<<"${asset_names}")"
 
-          if [ "$create_build_image" = "true" ]; then
+          # .oci artifacts for the build image
+          create_build_image=$(echo "$stack" | jq -r '.create_build_image // false')
+          if [[ $create_build_image == true ]]; then
+
             asset_names="$(jq -c \
               --arg image_filepath "image-files" \
               --arg stack_name "${stack_name}" \
-              --arg build_image "${build_image}" \
-              --arg tag "${tag}" \
-              --arg asset_prefix "$asset_prefix" \
+              --arg build_image_asset_prefix "${build_image_asset_prefix}" \
               --arg build_image_registry_name "${build_image_registry_name}" \
               '. += [
                   {
-                    "name": ($asset_prefix + "-" + $tag + "-" + $build_image),
+                    "name": $build_image_asset_prefix,
+                    "path": ($image_filepath + "/" + "current-build-image-" + $stack_name + "/build" + ".oci"),
                     "registry_name": $build_image_registry_name
+
                   }
                 ]' <<<"${asset_names}")"
           fi

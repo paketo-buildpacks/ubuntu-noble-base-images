@@ -1,6 +1,5 @@
 {
   "support_usns": true,
-  "update_on_new_image": true,
   "receipts_show_limit": 16,
   "platforms": ["linux/amd64", "linux/arm64"],
   "os_name": "ubuntu",
@@ -15,7 +14,7 @@
       "run_image": "run",
       "stack_type": "tiny",
       "pattern_image_registry_name": "os_name-os_codename-build_image_run_image-stack_type",
-      "pattern_assets_prefix": "os_name-os_codename-build_image_run_image-stak_type-version-arch"
+      "pattern_assets_prefix": "os_name-os_codename-build_image_run_image-stack_type-version-arch"
     },
     {
       "name": "noble-static",
