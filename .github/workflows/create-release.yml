@@ -1261,9 +1261,9 @@ jobs:
               sbom_asset_name_build_image=$( echo '[ "'"$os_name"'", "'"$os_codename"'", "'"$build_image"'", "'"$stack_type"'", "'"$version"'",
               "'"$arch_prefix"'", "receipt.cyclonedx.json" ]' | jq -r 'map(select(length > 0)) | join("-")')
             elif [[ "$pattern_assets_prefix" == "os_name-os_codename-build_image_run_image-version-arch" ]]; then
-              sbom_asset_name_run_image=$( echo '[ "'"$os_name"'", "'"$os_codename"'", "'"$run_image"'", "'"$stack_type"'", "'"$version"'", 
+              sbom_asset_name_run_image=$( echo '[ "'"$os_name"'", "'"$os_codename"'", "'"$run_image"'", "'"$version"'",
               "'"$arch_prefix"'", "receipt.cyclonedx.json" ]' | jq -r 'map(select(length > 0)) | join("-")' )
-              sbom_asset_name_build_image=$(echo '[ "'"$os_name"'", "'"$os_codename"'", "'"$build_image"'", "'"$version"'", "'"$arch_prefix"'", 
+              sbom_asset_name_build_image=$(echo '[ "'"$os_name"'", "'"$os_codename"'", "'"$build_image"'", "'"$version"'", "'"$arch_prefix"'",
               "receipt.cyclonedx.json" ]' | jq -r 'map(select(length > 0)) | join("-")')
             elif [[ "$pattern_assets_prefix" == "os_codename-stack_type-repo_type-version-arch-build_image_run_image" ]]; then
               sbom_asset_name_run_image=$(echo '[ "'"$os_codename"'", "'"$stack_type"'", "'"$repo_type"'", "'"$version"'", "'"$arch_prefix"'",
