@@ -5,7 +5,7 @@ set -o pipefail
 
 readonly PROG_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 readonly STACK_DIR="$(cd "${PROG_DIR}/.." && pwd)"
-readonly STACK_IMAGES_JSON_PATH="${STACK_DIR}/stacks/images.json"
+readonly STACK_IMAGES_JSON_PATH="${STACK_DIR}/images.json"
 readonly INTEGRATION_JSON="${STACK_DIR}/integration.json"
 declare STACK_IMAGES
 
