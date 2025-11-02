@@ -7,7 +7,7 @@ platforms = ["linux/amd64", "linux/arm64"]
 [build]
   description = "ubuntu:noble with compilers and shell utilities"
   dockerfile = "./build.Dockerfile"
-  gid = 1000
+  gid = 1001
   shell = "/bin/bash"
   uid = 1001
 
@@ -58,7 +58,7 @@ Components: main universe multiverse
 [run]
   description = "noble for statically-linked applications containing tzdata and ca-certificates"
   dockerfile = "./run/run.Dockerfile"
-  gid = 1000
+  gid = 1001
   shell = "/sbin/nologin"
   uid = 1002
 
