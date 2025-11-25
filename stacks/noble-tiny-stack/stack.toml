@@ -87,7 +87,9 @@ Signed-By: /usr/share/keyrings/ubuntu-archive-keyring.gpg
     netbase \
     openssl \
     tzdata \
-    zlib1g"""
+    zlib1g \
+    libstdc++6 \
+    libgcc-s1"""
 
   [run.platforms."linux/arm64".args]
     architecture = "arm64"
