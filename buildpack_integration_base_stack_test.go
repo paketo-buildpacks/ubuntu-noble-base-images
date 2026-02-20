@@ -87,9 +87,6 @@ func testBuildpackIntegrationBaseStack(t *testing.T, context spec.G, it spec.S) 
 		Expect(docker.Image.Remove.Execute(image.ID)).To(Succeed())
 		Expect(docker.Volume.Remove.Execute(occam.CacheVolumeNames(name))).To(Succeed())
 
-		_, err := getLifecycleVersion(builder)
-		Expect(err).NotTo(HaveOccurred())
-
 		Expect(docker.Image.Remove.Execute(builder)).To(Succeed())
 		Expect(os.RemoveAll(builderConfigFilepath)).To(Succeed())
 

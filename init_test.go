@@ -2,7 +2,6 @@ package acceptance_test
 
 import (
 	"bytes"
-	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -11,21 +10,12 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/onsi/gomega/format"
-	"github.com/paketo-buildpacks/occam"
 	"github.com/paketo-buildpacks/packit/v2/pexec"
 	"github.com/sclevine/spec"
 	"github.com/sclevine/spec/report"
 
 	. "github.com/onsi/gomega"
 )
-
-type Builder struct {
-	LocalInfo struct {
-		Lifecycle struct {
-			Version string `json:"version"`
-		} `json:"lifecycle"`
-	} `json:"local_info"`
-}
 
 var tinyStack struct {
 	BuildArchive string
@@ -50,12 +40,9 @@ var staticStack struct {
 
 var RegistryUrl string
 
-var lifecycleVersion string
-
 func by(_ string, f func()) { f() }
 
 func TestAcceptance(t *testing.T) {
-	docker := occam.NewDocker()
 
 	format.MaxLength = 0
 	SetDefaultEventuallyTimeout(30 * time.Second)
@@ -87,9 +74,6 @@ func TestAcceptance(t *testing.T) {
 	suite("BuildpackIntegrationTinyStack", testBuildpackIntegrationTinyStack)
 	suite("BuildpackIntegrationBaseStack", testBuildpackIntegrationBaseStack)
 	suite.Run(t)
-
-	Expect(docker.Image.Remove.Execute(fmt.Sprintf("buildpacksio/lifecycle:%s", lifecycleVersion))).To(Succeed())
-
 }
 
 func createBuilder(config string, name string) (string, error) {
@@ -107,33 +91,4 @@ func createBuilder(config string, name string) (string, error) {
 		},
 	})
 	return buf.String(), err
-}
-
-func getLifecycleVersion(builderID string) (string, error) {
-	buf := bytes.NewBuffer(nil)
-	pack := pexec.NewExecutable("pack")
-	err := pack.Execute(pexec.Execution{
-		Stdout: buf,
-		Stderr: buf,
-		Args: []string{
-			"builder",
-			"inspect",
-			builderID,
-			"-o",
-			"json",
-		},
-	})
-
-	if err != nil {
-		return "", err
-	}
-
-	var builder Builder
-	err = json.Unmarshal(buf.Bytes(), &builder)
-	if err != nil {
-		return "", err
-	}
-
-	lifecycleVersion = builder.LocalInfo.Lifecycle.Version
-	return builder.LocalInfo.Lifecycle.Version, nil
 }
