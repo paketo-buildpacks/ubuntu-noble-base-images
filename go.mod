@@ -1,6 +1,6 @@
 module github.com/paketo-buildpacks/noble-base-stack
 
-go 1.26.2
+go 1.26.3
 
 require (
 	github.com/google/go-containerregistry v0.19.1
