@@ -40,3 +40,4 @@ RUN rm -rf /static/var/lib/dpkg/status
 
 FROM scratch
 COPY --from=builder /static/ /
+LABEL org.opencontainers.image.source="https://github.com/paketo-buildpacks/ubuntu-noble-base-images"

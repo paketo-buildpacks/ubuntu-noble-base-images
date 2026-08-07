@@ -1,4 +1,5 @@
 FROM ubuntu:noble
+LABEL org.opencontainers.image.source="https://github.com/paketo-buildpacks/ubuntu-noble-base-images"
 
 ARG sources
 ARG packages
