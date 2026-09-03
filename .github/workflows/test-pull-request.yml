@@ -16,7 +16,7 @@ jobs:
 
     steps:
       - name: Checkout repo
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0  # gets full history
 
@@ -57,7 +57,7 @@ jobs:
         stacks: ${{ fromJSON(needs.preparation.outputs.stacks) }}
     steps:
     - name: Checkout
-      uses: actions/checkout@v6
+      uses: actions/checkout@v7
 
     # https://github.com/docker/setup-qemu-action
     - name: Set up QEMU
@@ -79,7 +79,7 @@ jobs:
 
 
     - name: Upload run image
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
         name: current-run-image-${{ matrix.stacks.name }}
         path: "${{ matrix.stacks.output_dir }}/run.oci"
@@ -87,7 +87,7 @@ jobs:
 
     - name: Upload build image
       if: ${{ matrix.stacks.create_build_image == true }}
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
         name: current-build-image-${{ matrix.stacks.name }}
         path: "${{ matrix.stacks.output_dir }}/build.oci"
@@ -99,20 +99,20 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
     - name: Setup Go
-      uses: actions/setup-go@v6
+      uses: actions/setup-go@v7
       with:
         go-version: stable
 
     - name: Checkout
-      uses: actions/checkout@v6
+      uses: actions/checkout@v7
 
     - name: Download Build Image(s)
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v8
       with:
         pattern: current-build-image-*
 
     - name: Download Run Image(s)
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v8
       with:
         pattern: current-run-image-*
 
@@ -123,9 +123,19 @@ jobs:
           output_dir=$(echo "$stack" | jq -r '.output_dir')
           create_build_image=$(echo "$stack" | jq -r '.create_build_image')
           mkdir -p $output_dir
-          mv "current-run-image-${name}/run.oci" "${output_dir}/run.oci"
-          if [ $create_build_image == 'true' ]; then
-            mv "current-build-image-${name}/build.oci" "${output_dir}/build.oci"
+
+          if [ -f "current-run-image-${name}/run.oci" ]; then
+            mv "current-run-image-${name}/run.oci" "${output_dir}/run.oci"
+          else
+            mv "run.oci" "${output_dir}/run.oci"
+          fi
+
+          if [ "$create_build_image" == 'true' ]; then
+            if [ -f "current-build-image-${name}/build.oci" ]; then
+              mv "current-build-image-${name}/build.oci" "${output_dir}/build.oci"
+            else
+              mv "build.oci" "${output_dir}/build.oci"
+            fi
           fi
         done
 
@@ -137,7 +147,7 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
     - name: Upload Artifact
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
         name: event-payload
         path: ${{ github.event_path }}
