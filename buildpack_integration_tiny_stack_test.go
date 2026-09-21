@@ -33,6 +33,9 @@ func testBuildpackIntegrationTinyStack(t *testing.T, context spec.G, it spec.S) 
 
 		image     occam.Image
 		container occam.Container
+
+		buildImageID string
+		runImageID   string
 	)
 
 	it.Before(func() {
@@ -54,19 +57,22 @@ func testBuildpackIntegrationTinyStack(t *testing.T, context spec.G, it spec.S) 
 		Expect(err).NotTo(HaveOccurred())
 		builderConfigFilepath = builderConfigFile.Name()
 
+		buildImageID = fmt.Sprintf("%s/noble-base-stack-build-%s", RegistryUrl, uuid.NewString())
+		runImageID = fmt.Sprintf("%s/noble-tiny-stack-run-%s", RegistryUrl, uuid.NewString())
+
 		_, err = fmt.Fprintf(builderConfigFile, `
 [stack]
   build-image = "%s:latest"
   id = "io.buildpacks.stacks.noble"
   run-image = "%s:latest"
 `,
-			baseStack.BuildImageID,
-			tinyStack.RunImageID,
+			buildImageID,
+			runImageID,
 		)
 		Expect(err).NotTo(HaveOccurred())
 
-		Expect(archiveToDaemon(baseStack.BuildArchive, baseStack.BuildImageID)).To(Succeed())
-		Expect(archiveToDaemon(tinyStack.RunArchive, tinyStack.RunImageID)).To(Succeed())
+		Expect(archiveToDaemon(baseStack.BuildArchive, buildImageID)).To(Succeed())
+		Expect(archiveToDaemon(tinyStack.RunArchive, runImageID)).To(Succeed())
 
 		builder = fmt.Sprintf("builder-%s", uuid.NewString())
 		logs, err := createBuilder(builderConfigFilepath, builder)
@@ -81,7 +87,8 @@ func testBuildpackIntegrationTinyStack(t *testing.T, context spec.G, it spec.S) 
 		Expect(docker.Image.Remove.Execute(builder)).To(Succeed())
 		Expect(os.RemoveAll(builderConfigFilepath)).To(Succeed())
 
-		Expect(docker.Image.Remove.Execute(tinyStack.RunImageID)).To(Succeed())
+		Expect(docker.Image.Remove.Execute(buildImageID)).To(Succeed())
+		Expect(docker.Image.Remove.Execute(runImageID)).To(Succeed())
 
 		Expect(os.RemoveAll(source)).To(Succeed())
 	})
