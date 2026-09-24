@@ -77,18 +77,38 @@ func TestAcceptance(t *testing.T) {
 }
 
 func createBuilder(config string, name string) (string, error) {
-	buf := bytes.NewBuffer(nil)
+	const (
+		attempts  = 3
+		sleepTime = 3 * time.Second
+	)
+
+	var (
+		logs string
+		err  error
+	)
 
 	pack := pexec.NewExecutable("pack")
-	err := pack.Execute(pexec.Execution{
-		Stdout: buf,
-		Stderr: buf,
-		Args: []string{
-			"builder",
-			"create",
-			name,
-			fmt.Sprintf("--config=%s", config),
-		},
-	})
-	return buf.String(), err
+	for attempt := 1; attempt <= attempts; attempt++ {
+		buf := bytes.NewBuffer(nil)
+		err = pack.Execute(pexec.Execution{
+			Stdout: buf,
+			Stderr: buf,
+			Args: []string{
+				"builder",
+				"create",
+				name,
+				fmt.Sprintf("--config=%s", config),
+			},
+		})
+		logs = buf.String()
+		if err == nil {
+			return logs, nil
+		}
+
+		if attempt < attempts {
+			time.Sleep(time.Duration(attempt) * sleepTime)
+		}
+	}
+
+	return logs, fmt.Errorf("create builder after %d attempts: %w\n%s", attempts, err, logs)
 }
